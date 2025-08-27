@@ -1,7 +1,10 @@
+using GorevNet.Context;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<GorevDBContext>();
 
 var app = builder.Build();
 
