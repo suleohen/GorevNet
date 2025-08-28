@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace GorevNet.Migrations
 {
-    [DbContext(typeof(GorevDBContext))]
+    [DbContext(typeof(TasksDBContext))]
     [Migration("20250827114441_createTaskTable")]
     partial class createTaskTable
     {

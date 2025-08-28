@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GorevNet.Context
 {
-    public class GorevDBContext : DbContext
+    public class TasksDBContext : DbContext
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
