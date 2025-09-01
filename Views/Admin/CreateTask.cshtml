@@ -1,0 +1,77 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@model GorevNet.Models.UserTask
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Yeni Görev Oluştur</h1>
+</div>
+
+    <div class="p-5">
+        <div class="text-center">
+            <h1 class="h4 text-gray-900 mb-4">Görev Bilgileri</h1>
+        </div>
+        <form asp-action="CreateTask" method="post" class="user" >
+
+            <!-- Title -->
+            <div class="form-group">
+            <input asp-for="Title" class="form-control form-control-user" placeholder="Görev Başlığı" required />
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+            <textarea asp-for="Description" class="form-control form-control-user" rows="3" placeholder="Görev Açıklaması" required ></textarea>
+            </div>
+
+        <div class="form-group row">
+            <!-- Priority -->
+            <div class="col-sm-6 mb-3 mb-sm-0">
+                <select asp-for="Priority" class="form-control form-control-user" required>
+                    <option value="" disabled selected>Öncelik Seç</option>
+                    <option value="0">Düşük</option>
+                    <option value="1">Normal</option>
+                    <option value="2">Acil</option>
+                </select>
+            </div>
+        </div>
+
+
+            <div class="form-group row">
+                <!-- Created Date -->
+                <div class="col-sm-6 mb-3 mb-sm-0">
+                    <label for="CreatedDate">Başlangıç Tarihi</label>
+                <input asp-for="CreatedDate" type="date" class="form-control form-control-user" required />
+                </div>
+
+                <!-- Due Date -->
+                <div class="col-sm-6">
+                    <label for="DueDate">Bitiş Tarihi</label>
+                <input asp-for="DueDate" type="date" class="form-control form-control-user" required />
+                </div>
+            </div>
+
+            <!-- Comment -->
+            <div class="form-group">
+                <textarea asp-for="Comment" class="form-control form-control-user" rows="2" placeholder="Yorum (Opsiyonel)"></textarea>
+            </div>
+
+            <div class="form-group row">
+                <!-- Assigned User -->
+                <div class="col-sm-6 mb-3 mb-sm-0">
+                <input asp-for="AssignedUserId" type="number" class="form-control form-control-user" placeholder="Atanan Kullanıcı ID" required />
+                </div>
+
+                <!-- Manager -->
+                <div class="col-sm-6">
+                <input asp-for="ManagerId" type="number" class="form-control form-control-user" placeholder="Yönetici ID" required />
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary btn-user btn-block">
+                Görev Oluştur
+            </button>
+        </form>
+    </div>
+  

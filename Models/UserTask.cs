@@ -4,17 +4,18 @@ namespace GorevNet.Models
 {
     public enum TaskStatus
     {
-        Beklemede,    // Beklemede
-        InProgress, // Yapiliyor
-        Completed   // Tamamlandi
+        Beklemede,      
+        DevamEdiyor,    
+        Tamamlandı     
     }
 
     public enum TaskPriority
     {
-        Low,     // Dusuk
-        Normal,  // Normal
-        High     // Acil
+        Düşük,          
+        Normal,         
+        Yüksek          
     }
+
     public class UserTask
     {
 
@@ -22,7 +23,7 @@ namespace GorevNet.Models
 
         [MaxLength(100)] public string Title { get; set; }
 
-        [MaxLength(500)] public string Description { get; set; }
+        [MaxLength(1500)] public string Description { get; set; }
         public TaskStatus Status { get; set; }
         public DateTime? StatusChangedDate { get; set; }
         public TaskPriority Priority { get; set; }
