@@ -2,10 +2,10 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-@model List<UserTask>
+@model List<Employee>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Aktif Görevler</h1>
+    <h1 class="h3 mb-0 text-gray-800">Personel Listesi</h1>
     <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
         <i class="fas fa-download fa-sm text-white-50"></i> Rapor Oluştur
     </a>
@@ -20,29 +20,21 @@
                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
             </a>
-            <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                 aria-labelledby="dropdownMenuLink">
-                <div class="dropdown-header">Options:</div>
-                <a class="dropdown-item" href="/Admin/CreateTask">Görev Ekle</a>
-                <!-- Buraya yeni özellikler eklenebilir -->
-
-                <!--  <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="#">Sil</a>-->
-            </div>
         </div>
     </div>
     <!-- Card Body -->
     <div class="card-body">
         <p>
-            Burada tüm aktif görevleri görebilirsiniz. Görevleri ekleyebilir, düzenleyebilir veya silebilirsiniz; bunu başlıktaki açılır menüyü kullanarak yapabilirsiniz.
+            Burada aktif personeleri görebilirsiniz.
         </p>
         <table class="table table-bordered">
             <thead class="thead-light">
                 <tr>
                     <th>ID</th>
-                    <th>Görev Adı</th>
-                    <th>Durum</th>
-                    <th>Atanan Kişi</th>
+                    <th>İsim</th>
+                    <th>Soyisim</th>
+                    <th>Departman</th>
+                    <th>İşe Başlama Tarihi</th>
                     <th>İşlemler</th>
 
                 </tr>
@@ -51,25 +43,26 @@
             {
                 <tbody>
                     <tr>
-                        <td>@item.Id</td>
-                        <td>@item.Title</td>
-                        <td>@item.Status</td> <!-- Daha sonra Türkçeleştir -->
-                        <td>@item.AssignedUserId</td>  <!-- Daha sonra isim ile değiştirilecek -->
+                        <td>@item.UserId</td>
+                        <td>@item.FirstName</td>
+                        <td>@item.LastName</td> 
+                        <td>@item.Department</td>
+                        <td>@item.HireDate</td>
                         <td>
                             <a href="#" class="btn btn-sm btn-primary">İncele</a>
-                            <a href="/Admin/EditTask?id=@item.Id" class="btn btn-sm btn-warning">Düzenle</a>
-                            <a href="@Url.Action("DeleteTask", "Admin", new { id = item.Id })"
+                            <a href="" class="btn btn-sm btn-warning">Düzenle</a>
+                            <a href=""
                                class="btn btn-sm btn-danger"
                                onclick="return confirm('Bu görevi silmek istediğine emin misin?');">
                                 Sil
                             </a>
                         </td>
                     </tr>
-                    
+
                 </tbody>
             }
 
-            
+
         </table>
     </div>
 </div>

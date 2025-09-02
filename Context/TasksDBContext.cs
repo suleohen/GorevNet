@@ -12,6 +12,9 @@ namespace GorevNet.Context
         }
 
         public DbSet<UserTask> UserTasks { get; set; }
+        public DbSet<Employee> Employees { get; set; }
+
+
 
     }
 }

@@ -1,0 +1,59 @@
+﻿@model GorevNet.Models.Employee
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Yeni Personel Oluştur</h1>
+</div>
+
+<div class="p-5">
+    <div class="text-center">
+        <h1 class="h4 text-gray-900 mb-4">Personel Bilgileri</h1>
+    </div>
+
+    <form asp-action="CreateEmployee" method="post" class="user">
+        <div class="form-group row">
+            <div class="col-sm-6 mb-3 mb-sm-0">
+                <label asp-for="FirstName" class="control-label"></label>
+                <input asp-for="FirstName" class="form-control form-control-user" placeholder="Ad" />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            <div class="col-sm-6">
+                <label asp-for="LastName" class="control-label"></label>
+                <input asp-for="LastName" class="form-control form-control-user" placeholder="Soyad" />
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <div class="col-sm-6 mb-3 mb-sm-0">
+                <label asp-for="Email" class="control-label"></label>
+                <input asp-for="Email" class="form-control form-control-user" placeholder="Email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-sm-6">
+                <label asp-for="UserId" class="control-label"></label>
+                <input asp-for="UserId" type="number" class="form-control form-control-user" placeholder="Kullanıcı ID" required />
+                <span asp-validation-for="UserId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <div class="col-sm-6 mb-3 mb-sm-0">
+                <label asp-for="Department" class="control-label"></label>
+                <input asp-for="Department" class="form-control form-control-user" placeholder="Departman" />
+                <span asp-validation-for="Department" class="text-danger"></span>
+            </div>
+            <div class="col-sm-6">
+                <label asp-for="HireDate" class="control-label"></label>
+                <input asp-for="HireDate" class="form-control form-control-user" type="date" />
+                <span asp-validation-for="HireDate" class="text-danger"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-user btn-block">Kaydet</button>
+        <a asp-action="Index" class="btn btn-secondary btn-user btn-block">İptal</a>
+    </form>
+</div>

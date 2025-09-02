@@ -25,7 +25,6 @@ namespace GorevNet.Controllers
             return View(tasks);
         }
 
-        [HttpGet]
         public IActionResult CreateTask()
         {
             return View();
@@ -70,6 +69,25 @@ namespace GorevNet.Controllers
             _context.UserTasks.Remove(task);
             _context.SaveChanges();
             return RedirectToAction("ActiveTasks");
+        }
+
+        public IActionResult ListEmployee()
+        {
+            var employees = _context.Employees.ToList();
+            return View(employees);
+        }
+
+        public IActionResult CreateEmployee()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult CreateEmployee(Employee model)
+        {
+            _context.Employees.Add(model);
+            _context.SaveChanges();
+            return RedirectToAction("Index");
         }
 
 
