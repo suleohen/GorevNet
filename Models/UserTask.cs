@@ -12,8 +12,8 @@ namespace GorevNet.Models
     public enum TaskPriority
     {
         Düşük,          
-        Normal,         
-        Yüksek          
+        Normal,
+        Yüksek
     }
 
     public class UserTask
@@ -31,7 +31,11 @@ namespace GorevNet.Models
         public DateTime? DueDate { get; set; }
         public string? Comment { get; set; }
         public int AssignedUserId { get; set; }
-        public int ManagerId { get; set; }
+        public int ManagerId { get; set; } //silebilirsin
+
+        public string CreatedBy { get; set; }
+        public string? ModifiedBy { get; set; }   // Son güncelleyen kullanıcı adı (opsiyonel)
+        public DateTime? ModifiedDate { get; set; }
 
         //Sonradan Tag eklenebilir
 

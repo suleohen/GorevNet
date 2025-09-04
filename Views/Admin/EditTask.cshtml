@@ -1,11 +1,9 @@
-﻿@model GorevNet.Models.UserTask
-
-@using Microsoft.AspNetCore.Mvc.Rendering
-@using GorevNet.Models
-
+﻿
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+
+@model GorevNet.Models.ViewModels.EditTaskViewModel
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Görevi Düzenle</h1>
@@ -17,54 +15,74 @@
     </div>
 
     <form asp-action="EditTask" method="post" class="user">
-        <input type="hidden" asp-for="Id" />
+        @Html.AntiForgeryToken()
+
+        <!-- Hidden ID -->
+        <input asp-for="Id" type="hidden" />
 
         <!-- Title -->
         <div class="form-group">
-            <input asp-for="Title" class="form-control form-control-user" placeholder="Görev Başlığı" value="@Model.Title" required />
+            <input asp-for="Title" class="form-control form-control-user" placeholder="Görev Başlığı" required />
+            <span asp-validation-for="Title" class="text-danger"></span>
         </div>
 
         <!-- Description -->
         <div class="form-group">
             <textarea asp-for="Description" class="form-control form-control-user" rows="3" placeholder="Görev Açıklaması" required></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
         </div>
 
         <!-- Priority (Enum) -->
         <div class="form-group">
             <label>Öncelik</label>
-            <select asp-for="Priority" class="form-control form-control-user"
-                    asp-items="Html.GetEnumSelectList<TaskPriority>()">
+            <select asp-for="Priority" class="form-control form-control-user">
+                <option value="">Öncelik Seçiniz</option>
+                <option value="0">Düşük</option>
+                <option value="1">Orta</option>
+                <option value="2">Yüksek</option>
+                <option value="3">Kritik</option>
             </select>
+            <span asp-validation-for="Priority" class="text-danger"></span>
         </div>
 
         <!-- Due Date -->
         <div class="form-group">
             <label>Bitiş Tarihi</label>
             <input asp-for="DueDate" type="date" class="form-control form-control-user" />
+            <span asp-validation-for="DueDate" class="text-danger"></span>
         </div>
 
         <!-- Comment -->
         <div class="form-group">
             <textarea asp-for="Comment" class="form-control form-control-user" rows="2" placeholder="Yorum (Opsiyonel)"></textarea>
+            <span asp-validation-for="Comment" class="text-danger"></span>
         </div>
 
-        <!-- Assigned User / Manager -->
-        <div class="form-group row">
-            <div class="col-sm-6 mb-3 mb-sm-0">
+        <!-- Assigned User -->
+        <div class="form-group">
+            @if (Model.Employees != null)
+            {
+                <select asp-for="AssignedUserId" asp-items="Model.Employees" class="form-control form-control-user">
+                    <option value="">Personel Seçiniz</option>
+                </select>
+            }
+            else
+            {
                 <input asp-for="AssignedUserId" type="number" class="form-control form-control-user" placeholder="Atanan Kullanıcı ID" required />
-            </div>
-            <div class="col-sm-6">
-                <input asp-for="ManagerId" type="number" class="form-control form-control-user" placeholder="Yönetici ID" required />
-            </div>
+            }
+            <span asp-validation-for="AssignedUserId" class="text-danger"></span>
         </div>
 
         <!-- Status (Enum) -->
         <div class="form-group">
             <label>Durum</label>
-            <select asp-for="Status" class="form-control form-control-user"
-                    asp-items="Html.GetEnumSelectList<GorevNet.Models.TaskStatus>()">
+            <select asp-for="Status" class="form-control form-control-user">
+                <option value="0">Beklemede</option>
+                <option value="1">Devam Ediyor</option>
+                <option value="2">Tamamlandı</option>
+                <option value="3">İptal Edildi</option>
             </select>
-
+            <span asp-validation-for="Status" class="text-danger"></span>
         </div>
 
         <!-- Submit Button -->

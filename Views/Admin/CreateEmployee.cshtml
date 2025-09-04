@@ -1,4 +1,4 @@
-﻿@model GorevNet.Models.Employee
+﻿@model GorevNet.Models.ViewModels.CreateEmployeeViewModel
 
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -8,48 +8,84 @@
     <h1 class="h3 mb-0 text-gray-800">Yeni Personel Oluştur</h1>
 </div>
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
 <div class="p-5">
     <div class="text-center">
         <h1 class="h4 text-gray-900 mb-4">Personel Bilgileri</h1>
     </div>
 
     <form asp-action="CreateEmployee" method="post" class="user">
+        @Html.AntiForgeryToken()
+
+        <!-- Form validation hataları -->
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
         <div class="form-group row">
-            <div class="col-sm-6 mb-3 mb-sm-0">
+            <!-- FirstName -->
+            <div class="col-sm-6 mb-3">
                 <label asp-for="FirstName" class="control-label"></label>
-                <input asp-for="FirstName" class="form-control form-control-user" placeholder="Ad" />
+                <input asp-for="FirstName" class="form-control form-control-user" placeholder="Ad" required />
                 <span asp-validation-for="FirstName" class="text-danger"></span>
             </div>
-            <div class="col-sm-6">
+            <!-- LastName -->
+            <div class="col-sm-6 mb-3">
                 <label asp-for="LastName" class="control-label"></label>
-                <input asp-for="LastName" class="form-control form-control-user" placeholder="Soyad" />
+                <input asp-for="LastName" class="form-control form-control-user" placeholder="Soyad" required />
                 <span asp-validation-for="LastName" class="text-danger"></span>
             </div>
         </div>
 
         <div class="form-group row">
-            <div class="col-sm-6 mb-3 mb-sm-0">
+            <!-- Email -->
+            <div class="col-sm-6 mb-3">
                 <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control form-control-user" placeholder="Email" />
+                <input asp-for="Email" class="form-control form-control-user" placeholder="Email" required />
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
-            <div class="col-sm-6">
-                <label asp-for="UserId" class="control-label"></label>
-                <input asp-for="UserId" type="number" class="form-control form-control-user" placeholder="Kullanıcı ID" required />
-                <span asp-validation-for="UserId" class="text-danger"></span>
+            <!-- HireDate -->
+            <div class="col-sm-6 mb-3">
+                <label asp-for="HireDate" class="control-label"></label>
+                <input asp-for="HireDate" type="date" class="form-control form-control-user" required />
+                <span asp-validation-for="HireDate" class="text-danger"></span>
             </div>
         </div>
 
         <div class="form-group row">
-            <div class="col-sm-6 mb-3 mb-sm-0">
+            <!-- Department (Dropdown) -->
+            <div class="col-sm-6 mb-3">
                 <label asp-for="Department" class="control-label"></label>
-                <input asp-for="Department" class="form-control form-control-user" placeholder="Departman" />
+                <select asp-for="Department" asp-items="@(new SelectList(Model.Departments))"
+                        class="form-control form-control-user" required>
+                    <option value="">Departman Seç</option>
+                </select>
                 <span asp-validation-for="Department" class="text-danger"></span>
             </div>
-            <div class="col-sm-6">
-                <label asp-for="HireDate" class="control-label"></label>
-                <input asp-for="HireDate" class="form-control form-control-user" type="date" />
-                <span asp-validation-for="HireDate" class="text-danger"></span>
+            <!-- Position -->
+            <div class="col-sm-6 mb-3">
+                <label asp-for="Position" class="control-label"></label>
+                <input asp-for="Position" class="form-control form-control-user" placeholder="Pozisyon" required />
+                <span asp-validation-for="Position" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <!-- Role (Dropdown) -->
+            <div class="col-sm-6 mb-3">
+                <label asp-for="Role" class="control-label"></label>
+                <select asp-for="Role" asp-items="@(new SelectList(Model.Roles))"
+                        class="form-control form-control-user" required>
+                    <option value="">Rol Seç</option>
+                </select>
+                <span asp-validation-for="Role" class="text-danger" ></span>
             </div>
         </div>
 
@@ -57,3 +93,7 @@
         <a asp-action="Index" class="btn btn-secondary btn-user btn-block">İptal</a>
     </form>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
