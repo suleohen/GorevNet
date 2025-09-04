@@ -1,7 +1,29 @@
+using GorevNet.Context;
+using GorevNet.Identitiy;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using static GorevNet.Controllers.AdminController;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<TasksDBContext>();
+
+
+//Identity db context baglantisi
+builder.Services.AddDbContext<ApplicationDBContext>(options =>
+{
+    var configuration = builder.Configuration;
+    var connectionString = configuration.GetConnectionString("DefaultConnection");
+    options.UseSqlServer(connectionString);
+} );
+
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
+    .AddEntityFrameworkStores<ApplicationDBContext>()
+    .AddDefaultTokenProviders(); 
+
 
 var app = builder.Build();
 
@@ -20,8 +42,21 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
+    var context = services.GetRequiredService<TasksDBContext>();
+
+    await SeedData.SeedAdminAndManager(userManager, roleManager, context);
+}
+
+
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}");
+
 
 app.Run();
