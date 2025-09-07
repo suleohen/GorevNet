@@ -28,11 +28,12 @@ namespace GorevNet.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public IActionResult Login(string returnUrl = null)
+        public async Task<IActionResult> Login(string returnUrl = null)
         {
+            // Her login sayfasına girildiğinde eski oturumu kapat
             if (User.Identity.IsAuthenticated)
             {
-                return RedirectToAction("Index", "Home");
+                await _signInManager.SignOutAsync();
             }
 
             ViewData["ReturnUrl"] = returnUrl;
@@ -99,7 +100,10 @@ namespace GorevNet.Controllers
                     else
                     {
                         ModelState.AddModelError(string.Empty, "Email veya şifre hatalı.");
+                        await _signInManager.SignOutAsync();
                     }
+
+
                 }
                 else
                 {

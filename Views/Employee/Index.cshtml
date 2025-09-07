@@ -1,0 +1,354 @@
+﻿@model List<GorevNet.Models.UserTask>
+@{
+    ViewBag.Title = "Ana Sayfa";
+    Layout = "_EmployeeLayout";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-home"></i> Hoşgeldiniz, @ViewBag.EmployeeName!
+    </h1>
+    <div class="d-none d-sm-inline-block">
+        <span class="text-gray-600">@DateTime.Now.ToString("dd MMMM yyyy, dddd", new System.Globalization.CultureInfo("tr-TR"))</span>
+    </div>
+</div>
+
+<!-- Content Row - Stats -->
+<div class="row">
+
+    <!-- Bekleyen Görevler Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Bekleyen Görevler</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.PendingTasks</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-pause-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Devam Eden Görevler Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Devam Eden Görevler</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.OngoingTasks</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tamamlanan Görevler Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Tamamlanan Görevler</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.CompletedTasks</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toplam Görevler Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Toplam Görevler</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Content Row - Recent Tasks -->
+<div class="row">
+
+    <div class="col-lg-8 mb-4">
+        <!-- Son Görevler -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Son Görevlerim</h6>
+                <a href="@Url.Action("MyTasks", "Employee")" class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye"></i> Tümünü Gör
+                </a>
+            </div>
+            <div class="card-body">
+                @if (Model.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Görev</th>
+                                    <th>Durum</th>
+                                    <th>Öncelik</th>
+                                    <th>Bitiş Tarihi</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var task in Model.Take(5))
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@task.Title</strong>
+                                            @if (!string.IsNullOrEmpty(task.Description) && task.Description.Length > 50)
+                                            {
+                                                <br><small class="text-muted">@task.Description.Substring(0, 50)...</small>
+                                            }
+                                        </td>
+                                        <td>
+                                            @{
+                                                string statusClass = task.Status switch
+                                                {
+                                                    GorevNet.Models.TaskStatus.Tamamlandı => "badge-success",
+                                                    GorevNet.Models.TaskStatus.DevamEdiyor => "badge-warning",
+                                                    GorevNet.Models.TaskStatus.Beklemede => "badge-info",
+                                                    _ => "badge-secondary"
+                                                };
+
+                                                string statusText = task.Status switch
+                                                {
+                                                    GorevNet.Models.TaskStatus.Tamamlandı => "Tamamlandı",
+                                                    GorevNet.Models.TaskStatus.DevamEdiyor => "Devam Ediyor",
+                                                    GorevNet.Models.TaskStatus.Beklemede => "Beklemede",
+                                                    _ => "Bilinmiyor"
+                                                };
+                                            }
+                                            <span class="badge @statusClass">@statusText</span>
+                                        </td>
+                                        <td>
+                                            @{
+                                                string priorityClass = task.Priority switch
+                                                {
+                                                    GorevNet.Models.TaskPriority.Yüksek => "badge-danger",
+                                                    GorevNet.Models.TaskPriority.Normal => "badge-primary",
+                                                    GorevNet.Models.TaskPriority.Düşük => "badge-secondary",
+                                                    _ => "badge-secondary"
+                                                };
+
+                                                string priorityText = task.Priority switch
+                                                {
+                                                    GorevNet.Models.TaskPriority.Yüksek => "Yüksek",
+                                                    GorevNet.Models.TaskPriority.Normal => "Normal",
+                                                    GorevNet.Models.TaskPriority.Düşük => "Düşük",
+                                                    _ => "Bilinmiyor"
+                                                };
+                                            }
+                                            <span class="badge @priorityClass">@priorityText</span>
+                                        </td>
+                                        <td>
+                                            @if (task.DueDate.HasValue)
+                                            {
+                                                var daysLeft = (task.DueDate.Value - DateTime.Now).Days;
+                                                if (daysLeft < 0)
+                                                {
+                                                    <span class="text-danger">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                        @task.DueDate.Value.ToString("dd/MM/yyyy")
+                                                        <br><small>(@Math.Abs(daysLeft) gün gecikti)</small>
+                                                    </span>
+                                                }
+                                                else if (daysLeft <= 2)
+                                                {
+                                                    <span class="text-warning">
+                                                        <i class="fas fa-clock"></i>
+                                                        @task.DueDate.Value.ToString("dd/MM/yyyy")
+                                                        <br><small>(@daysLeft gün kaldı)</small>
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@task.DueDate.Value.ToString("dd/MM/yyyy")</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (task.Status != GorevNet.Models.TaskStatus.Tamamlandı)
+                                            {
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    @if (task.Status == GorevNet.Models.TaskStatus.Beklemede)
+                                                    {
+                                                        <button type="button" class="btn btn-success btn-sm" 
+                                                                onclick="updateTaskStatus(@task.Id, @((int)GorevNet.Models.TaskStatus.DevamEdiyor), 'Göreve başladım')" 
+                                                                title="Göreve Başla">
+                                                            <i class="fas fa-play"></i>
+                                                        </button>
+                                                    }
+                                                    else if (task.Status == GorevNet.Models.TaskStatus.DevamEdiyor)
+                                                    {
+                                                        <button type="button" class="btn btn-warning btn-sm" 
+                                                                onclick="updateTaskStatus(@task.Id, @((int)GorevNet.Models.TaskStatus.Beklemede), 'Görevi durdurdum')" 
+                                                                title="Durdur">
+                                                            <i class="fas fa-pause"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-success btn-sm" 
+                                                                onclick="updateTaskStatus(@task.Id, @((int)GorevNet.Models.TaskStatus.Tamamlandı), 'Görev tamamlandı')" 
+                                                                title="Tamamla">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-check"></i> Tamamlandı
+                                                </span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-gray-300 mb-3"></i>
+                        <h5 class="text-gray-500">Henüz görev bulunmuyor</h5>
+                        <p class="text-gray-400">Size atanan görevler burada görünecek.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Hızlı Erişim -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Hızlı Erişim</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="@Url.Action("MyTasks", "Employee")" class="list-group-item list-group-item-action">
+                        <i class="fas fa-tasks fa-fw mr-2"></i>
+                        Tüm Görevlerim
+                    </a>
+                    <a href="@Url.Action("Profile", "Employee")" class="list-group-item list-group-item-action">
+                        <i class="fas fa-user fa-fw mr-2"></i>
+                        Profilim
+                    </a>
+                    <a href="@Url.Action("ChangePassword", "Account")" class="list-group-item list-group-item-action">
+                        <i class="fas fa-key fa-fw mr-2"></i>
+                        Şifre Değiştir
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bugünün Tarihi ve Saat -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Bugün</h6>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-2">
+                    <i class="fas fa-calendar-day fa-2x text-primary mb-2"></i>
+                </div>
+                <h5 class="mb-1">@DateTime.Now.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("tr-TR"))</h5>
+                <p class="text-gray-600 mb-0">@DateTime.Now.ToString("dddd", new System.Globalization.CultureInfo("tr-TR"))</p>
+                <div class="mt-3">
+                    <span id="current-time" class="h6 text-primary">@DateTime.Now.ToString("HH:mm")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        // Görev durumu güncelleme
+        function updateTaskStatus(taskId, status, comment) {
+            if (confirm('Bu işlemi yapmak istediğinizden emin misiniz?')) {
+                $.ajax({
+                    url: '@Url.Action("UpdateTaskStatus", "Employee")',
+                    type: 'POST',
+                    data: {
+                        taskId: taskId,
+                        status: status,
+                        comment: comment,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (result) {
+                        if (result.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarılı!',
+                                text: result.message,
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Hata!',
+                                text: result.message
+                            });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Hata!',
+                            text: 'İşlem sırasında bir hata oluştu.'
+                        });
+                    }
+                });
+            }
+        }
+
+        // Saati güncelle
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('tr-TR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('current-time').textContent = timeString;
+        }
+
+        // Sayfa yüklendiğinde saati başlat
+        setInterval(updateTime, 1000);
+    </script>
+}
