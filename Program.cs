@@ -18,7 +18,14 @@ builder.Services.AddDbContext<ApplicationDBContext>(options =>
     var configuration = builder.Configuration;
     var connectionString = configuration.GetConnectionString("DefaultConnection");
     options.UseSqlServer(connectionString);
-} );
+});
+
+/*builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // kýsa süreli cookie
+    options.SlidingExpiration = true;
+});*/
+
 
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
     .AddEntityFrameworkStores<ApplicationDBContext>()
