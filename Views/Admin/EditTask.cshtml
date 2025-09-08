@@ -1,93 +1,387 @@
-﻿
+﻿@model GorevNet.Models.ViewModels.EditTaskViewModel
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Görevi Düzenle";
 }
 
-@model GorevNet.Models.ViewModels.EditTaskViewModel
-
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Görevi Düzenle</h1>
-</div>
-
-<div class="p-5">
-    <div class="text-center">
-        <h1 class="h4 text-gray-900 mb-4">Görev Bilgileri</h1>
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-edit text-warning mr-2"></i>Görevi Düzenle
+    </h1>
+    <div>
+        <a href="/Admin/TaskDetails/@Model.Id" class="btn btn-info btn-sm">
+            <i class="fas fa-eye"></i> Detayları Gör
+        </a>
+        <a href="/Admin/ActiveTasks" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Geri Dön
+        </a>
     </div>
-
-    <form asp-action="EditTask" method="post" class="user">
-        @Html.AntiForgeryToken()
-
-        <!-- Hidden ID -->
-        <input asp-for="Id" type="hidden" />
-
-        <!-- Title -->
-        <div class="form-group">
-            <input asp-for="Title" class="form-control form-control-user" placeholder="Görev Başlığı" required />
-            <span asp-validation-for="Title" class="text-danger"></span>
-        </div>
-
-        <!-- Description -->
-        <div class="form-group">
-            <textarea asp-for="Description" class="form-control form-control-user" rows="3" placeholder="Görev Açıklaması" required></textarea>
-            <span asp-validation-for="Description" class="text-danger"></span>
-        </div>
-
-        <!-- Priority (Enum) -->
-        <div class="form-group">
-            <label>Öncelik</label>
-            <select asp-for="Priority" class="form-control form-control-user">
-                <option value="">Öncelik Seçiniz</option>
-                <option value="0">Düşük</option>
-                <option value="1">Orta</option>
-                <option value="2">Yüksek</option>
-                <option value="3">Kritik</option>
-            </select>
-            <span asp-validation-for="Priority" class="text-danger"></span>
-        </div>
-
-        <!-- Due Date -->
-        <div class="form-group">
-            <label>Bitiş Tarihi</label>
-            <input asp-for="DueDate" type="date" class="form-control form-control-user" />
-            <span asp-validation-for="DueDate" class="text-danger"></span>
-        </div>
-
-        <!-- Comment -->
-        <div class="form-group">
-            <textarea asp-for="Comment" class="form-control form-control-user" rows="2" placeholder="Yorum (Opsiyonel)"></textarea>
-            <span asp-validation-for="Comment" class="text-danger"></span>
-        </div>
-
-        <!-- Assigned User -->
-        <div class="form-group">
-            @if (Model.Employees != null)
-            {
-                <select asp-for="AssignedUserId" asp-items="Model.Employees" class="form-control form-control-user">
-                    <option value="">Personel Seçiniz</option>
-                </select>
-            }
-            else
-            {
-                <input asp-for="AssignedUserId" type="number" class="form-control form-control-user" placeholder="Atanan Kullanıcı ID" required />
-            }
-            <span asp-validation-for="AssignedUserId" class="text-danger"></span>
-        </div>
-
-        <!-- Status (Enum) -->
-        <div class="form-group">
-            <label>Durum</label>
-            <select asp-for="Status" class="form-control form-control-user">
-                <option value="0">Beklemede</option>
-                <option value="1">Devam Ediyor</option>
-                <option value="2">Tamamlandı</option>
-                <option value="3">İptal Edildi</option>
-            </select>
-            <span asp-validation-for="Status" class="text-danger"></span>
-        </div>
-
-        <!-- Submit Button -->
-        <button type="submit" class="btn btn-warning btn-user btn-block">
-            Güncelle
-        </button>
-    </form>
 </div>
+
+<!-- Başarı/Hata Mesajları -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="close" data-dismiss="alert">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header py-3 bg-gradient-warning">
+                <h6 class="m-0 font-weight-bold text-white">
+                    <i class="fas fa-tasks mr-2"></i>Görev Bilgilerini Düzenle
+                </h6>
+            </div>
+            <div class="card-body">
+
+                <!-- Validation Summary -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-triangle mr-2"></i>Lütfen aşağıdaki hataları düzeltin:</h6>
+                        <ul class="mb-0">
+                            @foreach (var modelState in ViewData.ModelState.Values)
+                            {
+                                foreach (var error in modelState.Errors)
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <form asp-action="EditTask" method="post" id="editTaskForm">
+                    @Html.AntiForgeryToken()
+                    <input asp-for="Id" type="hidden" />
+
+                    <div class="row">
+                        <!-- Sol Kolon -->
+                        <div class="col-md-6">
+                            <!-- Görev Başlığı -->
+                            <div class="form-group">
+                                <label asp-for="Title" class="font-weight-bold">
+                                    <i class="fas fa-heading text-primary mr-1"></i>Görev Başlığı *
+                                </label>
+                                <input asp-for="Title"
+                                       class="form-control form-control-lg"
+                                       placeholder="Görev başlığını giriniz"
+                                       maxlength="100" />
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                                <small class="form-text text-muted">
+                                    <span id="titleCounter">0</span>/100 karakter
+                                </small>
+                            </div>
+
+                            <!-- Atanan Personel -->
+                            <div class="form-group">
+                                <label asp-for="AssignedUserId" class="font-weight-bold">
+                                    <i class="fas fa-user text-info mr-1"></i>Atanan Personel *
+                                </label>
+                                @if (Model.Employees != null && Model.Employees.Any())
+                                {
+                                    <select asp-for="AssignedUserId"
+                                            asp-items="Model.Employees"
+                                            class="form-control form-control-lg">
+                                        <option value="">-- Personel Seçiniz --</option>
+                                    </select>
+                                }
+                                else
+                                {
+                                    <input asp-for="AssignedUserId"
+                                           type="number"
+                                           class="form-control form-control-lg"
+                                           placeholder="Atanan Kullanıcı ID" />
+                                }
+                                <span asp-validation-for="AssignedUserId" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Öncelik -->
+                            <div class="form-group">
+                                <label asp-for="Priority" class="font-weight-bold">
+                                    <i class="fas fa-exclamation-circle text-warning mr-1"></i>Öncelik *
+                                </label>
+                                <select asp-for="Priority" class="form-control form-control-lg" id="prioritySelect">
+                                    <option value="">-- Öncelik Seçiniz --</option>
+                                    <option value="0" data-class="badge-secondary">🔵 Düşük</option>
+                                    <option value="1" data-class="badge-primary">🟡 Normal</option>
+                                    <option value="2" data-class="badge-danger">🔴 Yüksek</option>
+                                </select>
+                                <span asp-validation-for="Priority" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Durum -->
+                            <div class="form-group">
+                                <label asp-for="Status" class="font-weight-bold">
+                                    <i class="fas fa-tasks text-success mr-1"></i>Durum
+                                </label>
+                                <select asp-for="Status" class="form-control form-control-lg" id="statusSelect">
+                                    <option value="0" data-class="badge-info">⏳ Beklemede</option>
+                                    <option value="1" data-class="badge-warning">🔄 Devam Ediyor</option>
+                                    <option value="2" data-class="badge-success">✅ Tamamlandı</option>
+                                </select>
+                                <span asp-validation-for="Status" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <!-- Sağ Kolon -->
+                        <div class="col-md-6">
+                            <!-- Bitiş Tarihi -->
+                            <div class="form-group">
+                                <label asp-for="DueDate" class="font-weight-bold">
+                                    <i class="fas fa-calendar-alt text-danger mr-1"></i>Bitiş Tarihi
+                                </label>
+                                <input asp-for="DueDate"
+                                       type="datetime-local"
+                                       class="form-control form-control-lg"
+                                       id="dueDateInput" />
+                                <span asp-validation-for="DueDate" class="text-danger small"></span>
+                                <small class="form-text" id="dueDateInfo"></small>
+                            </div>
+
+                            <!-- Açıklama -->
+                            <div class="form-group">
+                                <label asp-for="Description" class="font-weight-bold">
+                                    <i class="fas fa-align-left text-secondary mr-1"></i>Görev Açıklaması *
+                                </label>
+                                <textarea asp-for="Description"
+                                          class="form-control"
+                                          rows="4"
+                                          placeholder="Görevin detaylı açıklamasını yazınız..."
+                                          maxlength="1500"></textarea>
+                                <span asp-validation-for="Description" class="text-danger small"></span>
+                                <small class="form-text text-muted">
+                                    <span id="descCounter">0</span>/1500 karakter
+                                </small>
+                            </div>
+
+                            <!-- Yorum -->
+                            <div class="form-group">
+                                <label asp-for="Comment" class="font-weight-bold">
+                                    <i class="fas fa-comment text-info mr-1"></i>Yönetici Yorumu
+                                </label>
+                                <textarea asp-for="Comment"
+                                          class="form-control"
+                                          rows="3"
+                                          placeholder="Görev hakkında yorum ekleyebilirsiniz..."
+                                          maxlength="500"></textarea>
+                                <span asp-validation-for="Comment" class="text-danger small"></span>
+                                <small class="form-text text-muted">
+                                    <span id="commentCounter">0</span>/500 karakter
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Alt Kısım -->
+                    <hr class="my-4">
+
+                    <!-- Önizleme Kartı -->
+                    <div class="card bg-light mb-4" id="previewCard" style="display: none;">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-eye mr-2"></i>Önizleme
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Başlık:</strong> <span id="previewTitle">-</span><br>
+                                    <strong>Atanan:</strong> <span id="previewAssigned">-</span><br>
+                                    <strong>Öncelik:</strong> <span id="previewPriority">-</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Durum:</strong> <span id="previewStatus">-</span><br>
+                                    <strong>Bitiş Tarihi:</strong> <span id="previewDueDate">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Butonlar -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button type="button"
+                                    class="btn btn-info btn-block"
+                                    onclick="togglePreview()">
+                                <i class="fas fa-eye mr-2"></i>Önizleme
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="submit"
+                                    class="btn btn-warning btn-block btn-lg"
+                                    id="submitBtn">
+                                <i class="fas fa-save mr-2"></i>Değişiklikleri Kaydet
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <a href="/Admin/ActiveTasks" class="btn btn-secondary btn-block">
+                                <i class="fas fa-times mr-2"></i>İptal Et ve Geri Dön
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+            // Karakter sayaçları
+            updateCharCount('#Title', '#titleCounter');
+            updateCharCount('#Description', '#descCounter');
+            updateCharCount('#Comment', '#commentCounter');
+
+            $('#Title, #Description, #Comment').on('input', function () {
+                const targetId = $(this).attr('id');
+                const counterId = targetId === 'Title' ? '#titleCounter' :
+                    targetId === 'Description' ? '#descCounter' : '#commentCounter';
+                updateCharCount('#' + targetId, counterId);
+            });
+
+            // Tarih kontrolü
+            $('#dueDateInput').on('change', function () {
+                checkDueDate();
+            });
+
+            // Form gönderme kontrolü
+            $('#editTaskForm').on('submit', function (e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Kaydediliyor...');
+            });
+
+            // Sayfa yüklendiğinde kontroller
+            checkDueDate();
+            updatePreview();
+        });
+
+        function updateCharCount(inputSelector, counterSelector) {
+            const length = $(inputSelector).val().length;
+            const maxLength = $(inputSelector).attr('maxlength');
+            $(counterSelector).text(length);
+
+            if (length > maxLength * 0.9) {
+                $(counterSelector).addClass('text-warning');
+            } else {
+                $(counterSelector).removeClass('text-warning');
+            }
+        }
+
+        function checkDueDate() {
+            const dueDate = new Date($('#dueDateInput').val());
+            const now = new Date();
+            const infoElement = $('#dueDateInfo');
+
+            if (dueDate) {
+                const diffTime = dueDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays < 0) {
+                    infoElement.html('<span class="text-danger"><i class="fas fa-exclamation-triangle mr-1"></i>Bu tarih geçmişte!</span>');
+                } else if (diffDays === 0) {
+                    infoElement.html('<span class="text-warning"><i class="fas fa-clock mr-1"></i>Bugün bitiyor!</span>');
+                } else if (diffDays <= 3) {
+                    infoElement.html('<span class="text-warning"><i class="fas fa-clock mr-1"></i>' + diffDays + ' gün kaldı</span>');
+                } else {
+                    infoElement.html('<span class="text-success"><i class="fas fa-check mr-1"></i>' + diffDays + ' gün var</span>');
+                }
+            }
+        }
+
+        function validateForm() {
+            let isValid = true;
+
+            // Zorunlu alanları kontrol et
+            if (!$('#Title').val().trim()) {
+                showError('#Title', 'Görev başlığı zorunludur');
+                isValid = false;
+            }
+
+            if (!$('#Description').val().trim()) {
+                showError('#Description', 'Görev açıklaması zorunludur');
+                isValid = false;
+            }
+
+            if (!$('#AssignedUserId').val()) {
+                showError('#AssignedUserId', 'Personel seçimi zorunludur');
+                isValid = false;
+            }
+
+            if (!$('#Priority').val()) {
+                showError('#Priority', 'Öncelik seçimi zorunludur');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function showError(selector, message) {
+            $(selector).addClass('is-invalid');
+            $(selector).next('.text-danger').text(message);
+        }
+
+        function togglePreview() {
+            const card = $('#previewCard');
+            if (card.is(':visible')) {
+                card.slideUp();
+            } else {
+                updatePreview();
+                card.slideDown();
+            }
+        }
+
+        function updatePreview() {
+            $('#previewTitle').text($('#Title').val() || '-');
+            $('#previewAssigned').text($('#AssignedUserId option:selected').text() || '-');
+
+            const priority = $('#Priority option:selected').text() || '-';
+            $('#previewPriority').html(priority !== '-' ? '<span class="badge badge-primary">' + priority + '</span>' : '-');
+
+            const status = $('#Status option:selected').text() || '-';
+            $('#previewStatus').html(status !== '-' ? '<span class="badge badge-info">' + status + '</span>' : '-');
+
+            const dueDate = $('#dueDateInput').val();
+            $('#previewDueDate').text(dueDate ? new Date(dueDate).toLocaleDateString('tr-TR') : '-');
+        }
+
+        // Enter tuşu ile form geçişi
+        $('input, select, textarea').on('keypress', function (e) {
+            if (e.which === 13 && !$(this).is('textarea')) {
+                e.preventDefault();
+                const inputs = $('input, select, textarea').not(':hidden');
+                const index = inputs.index(this);
+                if (index < inputs.length - 1) {
+                    inputs.eq(index + 1).focus();
+                }
+            }
+        });
+    </script>
+}

@@ -1,8 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 
-<head> GNET 
-
+<head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -30,7 +29,7 @@
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
             <!-- Sidebar - Brand -->
-            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/Admin/Index">
                 <div class="sidebar-brand-icon rotate-n-15">
                     <i class="fas fa-laugh-wink"></i>
                 </div>
@@ -42,9 +41,9 @@
 
             <!-- Nav Item - Dashboard -->
             <li class="nav-item active">
-                <a class="nav-link" href="/index.html">
+                <a class="nav-link" href="/Admin/Index">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
+                    <span>Gösterge Paneli</span>
                 </a>
             </li>
 
@@ -302,7 +301,7 @@
                                         <img class="rounded-circle" src="/img/undraw_profile_3.svg"
                                              alt="...">
                                         <div class="status-indicator bg-warning"></div>
-                                    </div> 
+                                    </div>
                                     <div>
                                         <div class="text-truncate">
                                             Last month's report looks great, I am very happy with
@@ -327,7 +326,7 @@
                                 </a>
                                 <a class="dropdown-item text-center small text-gray-500" href="#">Read More Messages</a>
                             </div>
-                        </li> 
+                        </li>
 
                         <div class="topbar-divider d-none d-sm-block"></div>
 
@@ -365,9 +364,11 @@
                     </ul>
 
                 </nav>
+
                 <div class="container-fluid">
-            @RenderBody()
+                    @RenderBody()
                 </div>
+
             </div>
             <!-- End of Main Content -->
             <!-- Footer -->
