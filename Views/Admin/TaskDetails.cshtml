@@ -1,0 +1,321 @@
+﻿@model GorevNet.Models.ViewModels.TaskDisplayViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Görev Detayları";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Görev Detayları</h1>
+    <div>
+        <a href="/Admin/EditTask?id=@Model.Id" class="btn btn-warning btn-sm">
+            <i class="fas fa-edit"></i> Düzenle
+        </a>
+        <a href="/Admin/ActiveTasks" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Geri Dön
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Ana İçerik -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-tasks mr-2"></i>@Model.Title
+                </h6>
+                @{
+                    string statusClass = Model.Status switch
+                    {
+                        GorevNet.Models.TaskStatus.Tamamlandı => "badge-success",
+                        GorevNet.Models.TaskStatus.DevamEdiyor => "badge-warning",
+                        GorevNet.Models.TaskStatus.Beklemede => "badge-info",
+                        _ => "badge-secondary"
+                    };
+                }
+                <span class="badge @statusClass">@Model.StatusDisplay</span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong>Görev ID:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        #@Model.Id
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong>Başlık:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        @Model.Title
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong>Açıklama:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        <div class="border p-3 bg-light rounded">
+                            @if (!string.IsNullOrEmpty(Model.Description))
+                            {
+                                @Html.Raw(Model.Description.Replace("\n", "<br>"))
+                            }
+                            else
+                            {
+                                <em class="text-muted">Açıklama girilmemiş</em>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong>Yorumlar:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        <div class="border p-3 bg-light rounded">
+                            @if (!string.IsNullOrEmpty(Model.Comment))
+                            {
+                                @Html.Raw(Model.Comment.Replace("\n", "<br>"))
+                            }
+                            else
+                            {
+                                <em class="text-muted">Yorum girilmemiş</em>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong>Atanan Kişi:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        <i class="fas fa-user text-primary mr-2"></i>
+                        <strong>@Model.AssignedUserName</strong>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong>Öncelik:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        @{
+                            string priorityClass = Model.Priority switch
+                            {
+                                GorevNet.Models.TaskPriority.Yüksek => "badge-danger",
+                                GorevNet.Models.TaskPriority.Normal => "badge-primary",
+                                GorevNet.Models.TaskPriority.Düşük => "badge-secondary",
+                                _ => "badge-secondary"
+                            };
+                        }
+                        <span class="badge @priorityClass">@Model.PriorityDisplay</span>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong>Durum:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        <span class="badge @statusClass">@Model.StatusDisplay</span>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Comment))
+                {
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <strong>Yorum:</strong>
+                        </div>
+                        <div class="col-sm-9">
+                            <div class="alert alert-info">
+                                <i class="fas fa-comment mr-2"></i>
+                                @Model.Comment
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Yan Bilgiler -->
+    <div class="col-lg-4">
+        <!-- Tarih Bilgileri -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-calendar-alt mr-2"></i>Tarih Bilgileri
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Oluşturulma Tarihi:</strong><br>
+                    <span class="text-muted">
+                        <i class="fas fa-plus-circle mr-1"></i>
+                        @Model.CreatedDate.ToString("dd.MM.yyyy HH:mm")
+                    </span>
+                </div>
+
+                @if (Model.DueDate.HasValue)
+                {
+                    <div class="mb-3">
+                        <strong>Bitiş Tarihi:</strong><br>
+                        @{
+                            var daysLeft = (Model.DueDate.Value - DateTime.Now).Days;
+                            string dateClass = daysLeft < 0 ? "text-danger" : (daysLeft <= 2 ? "text-warning" : "text-success");
+                        }
+                        <span class="@dateClass">
+                            <i class="fas fa-flag-checkered mr-1"></i>
+                            @Model.DueDate.Value.ToString("dd.MM.yyyy")
+                            @if (daysLeft < 0)
+                            {
+                                <br>
+
+                                <small>(@Math.Abs(daysLeft) gün gecikti)</small>
+                            }
+                            else if (daysLeft <= 2)
+                            {
+                                <br>
+
+                                <small>(@daysLeft gün kaldı)</small>
+                            }
+                            else
+                            {
+                                <br>
+
+                                <small>(@daysLeft gün var)</small>
+                            }
+                        </span>
+                    </div>
+                }
+
+                @if (Model.ModifiedDate.HasValue)
+                {
+                    <div class="mb-3">
+                        <strong>Son Güncelleme:</strong><br>
+                        <span class="text-muted">
+                            <i class="fas fa-edit mr-1"></i>
+                            @Model.ModifiedDate.Value.ToString("dd.MM.yyyy HH:mm")
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Oluşturan Bilgileri -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-user-plus mr-2"></i>Oluşturan Bilgileri
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Oluşturan:</strong><br>
+                    <span class="text-muted">
+                        <i class="fas fa-user mr-1"></i>
+                        @Model.CreatedBy
+                    </span>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.ModifiedBy))
+                {
+                    <div class="mb-3">
+                        <strong>Son Güncelleyen:</strong><br>
+                        <span class="text-muted">
+                            <i class="fas fa-user-edit mr-1"></i>
+                            @Model.ModifiedBy
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- İşlemler -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-cogs mr-2"></i>İşlemler
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/Admin/EditTask?id=@Model.Id" class="btn btn-warning">
+                        <i class="fas fa-edit mr-2"></i>Görevi Düzenle
+                    </a>
+                    <button type="button" class="btn btn-danger"
+                            onclick="deleteTask(@Model.Id, '@Model.Title')">
+                        <i class="fas fa-trash mr-2"></i>Görevi Sil
+                    </button>
+                    <a href="/Admin/ActiveTasks" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left mr-2"></i>Geri Dön
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Task Delete Form (CSRF Token için) -->
+<form id="deleteForm" style="display: none;" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script>
+        function deleteTask(taskId, taskTitle) {
+            Swal.fire({
+                title: 'Görevi Sil',
+                text: `"${taskTitle}" görevini silmek istediğinizden emin misiniz?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Evet, Sil!',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/Admin/DeleteTask',
+                        type: 'POST',
+                        data: {
+                            id: taskId,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    'Silindi!',
+                                    response.message,
+                                    'success'
+                                ).then(() => {
+                                    window.location.href = '/Admin/ActiveTasks';
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Hata!',
+                                    response.message,
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function() {
+                            Swal.fire(
+                                'Hata!',
+                                'Silme işlemi sırasında bir hata oluştu.',
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

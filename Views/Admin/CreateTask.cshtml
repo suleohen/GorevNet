@@ -1,69 +1,461 @@
-﻿@{
+﻿@model GorevNet.ViewModels.CreateTaskViewModel
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Yeni Görev Oluştur";
 }
 
-@model GorevNet.ViewModels.CreateTaskViewModel
-
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Yeni Görev Oluştur</h1>
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-plus-circle text-primary mr-2"></i>Yeni Görev Oluştur
+    </h1>
+    <div>
+        <a href="/Admin/ActiveTasks" class="btn btn-secondary btn-sm">
+            <i class="fas fa-list"></i> Görev Listesi
+        </a>
+        <a href="/Admin/Index" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+    </div>
 </div>
 
-<div class="p-5">
-    <div class="text-center">
-        <h1 class="h4 text-gray-900 mb-4">Görev Bilgileri</h1>
-    </div>
-
-    <form asp-action="CreateTask" method="post" class="user">
-        @Html.AntiForgeryToken()
-
-        <!-- Title -->
-        <div class="form-group">
-            <input asp-for="Title" class="form-control form-control-user" placeholder="Görev Başlığı" />
-            <span asp-validation-for="Title" class="text-danger"></span>
-        </div>
-
-        <!-- Description -->
-        <div class="form-group">
-            <textarea asp-for="Description" class="form-control form-control-user" rows="3" placeholder="Görev Açıklaması"></textarea>
-            <span asp-validation-for="Description" class="text-danger"></span>
-        </div>
-
-        <div class="form-group row">
-            <!-- Priority -->
-            <div class="col-sm-6 mb-3 mb-sm-0">
-                <label>Öncelik</label>
-                <select asp-for="Priority" asp-items="Html.GetEnumSelectList<GorevNet.Models.TaskPriority>()" class="form-control form-control-user"></select>
-                <span asp-validation-for="Priority" class="text-danger"></span>
-            </div>
-
-            <!-- Due Date -->
-            <div class="col-sm-6">
-                <label>Bitiş Tarihi</label>
-                <input asp-for="DueDate" type="date" class="form-control form-control-user" />
-                <span asp-validation-for="DueDate" class="text-danger"></span>
-            </div>
-        </div>
-
-        <!-- Assigned User -->
-        <div class="form-group">
-            <label>Çalışan</label>
-            <select asp-for="AssignedUserId" asp-items="Model.Employees" class="form-control form-control-user"></select>
-            <span asp-validation-for="AssignedUserId" class="text-danger"></span>
-        </div>
-
-        <!-- Comment -->
-        <div class="form-group">
-            <textarea asp-for="Comment" class="form-control form-control-user" rows="2" placeholder="Yorum (Opsiyonel)"></textarea>
-            <span asp-validation-for="Comment" class="text-danger"></span>
-        </div>
-
-        <!-- Submit Button -->
-        <button type="submit" class="btn btn-primary btn-user btn-block">
-            Görev Oluştur
+<!-- Başarı/Hata Mesajları -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert">
+            <span aria-hidden="true">&times;</span>
         </button>
-    </form>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="close" data-dismiss="alert">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header py-3 bg-gradient-primary">
+                <h6 class="m-0 font-weight-bold text-white">
+                    <i class="fas fa-tasks mr-2"></i>Görev Bilgilerini Giriniz
+                </h6>
+            </div>
+            <div class="card-body">
+
+                <!-- Validation Summary -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-triangle mr-2"></i>Lütfen aşağıdaki hataları düzeltin:</h6>
+                        <ul class="mb-0">
+                            @foreach (var modelState in ViewData.ModelState.Values)
+                            {
+                                foreach (var error in modelState.Errors)
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <!-- Form Açıklama -->
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Bilgi:</strong> Tüm zorunlu alanları (*) doldurmanız gerekmektedir. Oluşturulan görev otomatik olarak "Beklemede" durumunda başlayacaktır.
+                </div>
+
+                <form asp-action="CreateTask" method="post" id="createTaskForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row">
+                        <!-- Sol Kolon -->
+                        <div class="col-md-6">
+                            <!-- Görev Başlığı -->
+                            <div class="form-group">
+                                <label asp-for="Title" class="font-weight-bold">
+                                    <i class="fas fa-heading text-primary mr-1"></i>Görev Başlığı *
+                                </label>
+                                <input asp-for="Title"
+                                       class="form-control form-control-lg"
+                                       maxlength="100"
+                                       required />
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                                <small class="form-text text-muted">
+                                    <span id="titleCounter">0</span>/100 karakter
+                                </small>
+                            </div>
+
+                            <!-- Atanan Personel -->
+                            <div class="form-group">
+                                <label asp-for="AssignedUserId" class="font-weight-bold">
+                                    <i class="fas fa-user text-info mr-1"></i>Atanan Personel *
+                                </label>
+                                @if (Model.Employees != null && Model.Employees.Any())
+                                {
+                                    <select asp-for="AssignedUserId"
+                                            asp-items="Model.Employees"
+                                            class="form-control form-control-lg"
+                                            required>
+                                        <option value="">-- Personel Seçiniz --</option>
+                                    </select>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                                        Henüz aktif personel bulunmuyor. <a href="/Admin/CreateEmployee">Personel ekleyin</a>.
+                                    </div>
+                                }
+                                <span asp-validation-for="AssignedUserId" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Öncelik -->
+                            <div class="form-group">
+                                <label asp-for="Priority" class="font-weight-bold">
+                                    <i class="fas fa-exclamation-circle text-warning mr-1"></i>Öncelik Seviyesi *
+                                </label>
+                                <select asp-for="Priority" class="form-control form-control-lg" required>
+                                    <option value="">-- Öncelik Seçiniz --</option>
+                                    <option value="0">🔵 Düşük - Normal işler</option>
+                                    <option value="1">🟡 Normal - Standart öncelik</option>
+                                    <option value="2">🔴 Yüksek - Acil işler</option>
+                                </select>
+                                <span asp-validation-for="Priority" class="text-danger small"></span>
+                                <small class="form-text text-muted">
+                                    Görevi ne kadar acil olduğunu belirtir
+                                </small>
+                            </div>
+
+                            <!-- Bitiş Tarihi -->
+                            <div class="form-group">
+                                <label asp-for="DueDate" class="font-weight-bold">
+                                    <i class="fas fa-calendar-alt text-danger mr-1"></i>Bitiş Tarihi *
+                                </label>
+                                <input asp-for="DueDate"
+                                       type="datetime-local"
+                                       class="form-control form-control-lg"
+                                       id="dueDateInput"
+                                       required />
+                                <span asp-validation-for="DueDate" class="text-danger small"></span>
+                                <small class="form-text" id="dueDateInfo"></small>
+                            </div>
+                        </div>
+
+                        <!-- Sağ Kolon -->
+                        <div class="col-md-6">
+                            <!-- Görev Açıklaması -->
+                            <div class="form-group">
+                                <label asp-for="Description" class="font-weight-bold">
+                                    <i class="fas fa-align-left text-secondary mr-1"></i>Görev Açıklaması *
+                                </label>
+                                <textarea asp-for="Description"
+                                          class="form-control"
+                                          rows="6"
+                                          placeholder="Görevin detaylı açıklamasını yazınız..."
+                                          maxlength="1500"
+                                          required></textarea>
+                                <span asp-validation-for="Description" class="text-danger small"></span>
+                                <small class="form-text text-muted">
+                                    <span id="descCounter">0</span>/1500 karakter
+                                </small>
+                            </div>
+
+                            <!-- Yönetici Yorumu -->
+                            <div class="form-group">
+                                <label asp-for="Comment" class="font-weight-bold">
+                                    <i class="fas fa-comment text-info mr-1"></i>Yönetici Yorumu
+                                </label>
+                                <textarea asp-for="Comment"
+                                          class="form-control"
+                                          rows="4"
+                                          placeholder="Görev hakkında ek bilgi, talimat veya önemli notlar..."
+                                          maxlength="500"></textarea>
+                                <span asp-validation-for="Comment" class="text-danger small"></span>
+                                <small class="form-text text-muted">
+                                    <span id="commentCounter">0</span>/500 karakter (opsiyonel)
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Alt Kısım -->
+                    <hr class="my-4">
+
+                    <!-- Önizleme Kartı -->
+                    <div class="card bg-light mb-4" id="previewCard" style="display: none;">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-eye mr-2"></i>Görev Önizlemesi
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>📝 Başlık:</strong> <span id="previewTitle">-</span><br>
+                                    <strong>👤 Atanan:</strong> <span id="previewAssigned">-</span><br>
+                                    <strong>⚡ Öncelik:</strong> <span id="previewPriority">-</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>📅 Bitiş Tarihi:</strong> <span id="previewDueDate">-</span><br>
+                                    <strong>📊 Durum:</strong> <span class="badge badge-info">Beklemede</span><br>
+                                    <strong>👨‍💼 Oluşturan:</strong> @User.Identity.Name
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <strong>📄 Açıklama:</strong>
+                                <div class="border p-2 bg-white rounded mt-1">
+                                    <span id="previewDescription">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Butonlar -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button type="button"
+                                    class="btn btn-info btn-block"
+                                    onclick="togglePreview()">
+                                <i class="fas fa-eye mr-2"></i>Önizleme
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="reset"
+                                    class="btn btn-secondary btn-block"
+                                    onclick="resetForm()">
+                                <i class="fas fa-undo mr-2"></i>Temizle
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit"
+                                    class="btn btn-primary btn-block btn-lg"
+                                    id="submitBtn">
+                                <i class="fas fa-plus mr-2"></i>Görev Oluştur
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <a href="/Admin/ActiveTasks" class="btn btn-outline-secondary btn-block">
+                                <i class="fas fa-arrow-left mr-2"></i>İptal Et ve Görev Listesine Dön
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function() {
+            // Bugünün tarihini minimum olarak ayarla
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDate = tomorrow.toISOString().slice(0, 16);
+            $('#dueDateInput').attr('min', minDate);
+
+            // Karakter sayaçları
+            updateCharCount('#Title', '#titleCounter');
+            updateCharCount('#Description', '#descCounter');
+            updateCharCount('#Comment', '#commentCounter');
+
+            $('#Title, #Description, #Comment').on('input', function() {
+                const targetId = $(this).attr('id');
+                const counterId = targetId === 'Title' ? '#titleCounter' :
+                                 targetId === 'Description' ? '#descCounter' : '#commentCounter';
+                updateCharCount('#' + targetId, counterId);
+                updatePreview();
+            });
+
+            // Tarih kontrolü
+            $('#dueDateInput').on('change', function() {
+                checkDueDate();
+                updatePreview();
+            });
+
+            // Diğer alanlar için önizleme güncelleme
+            $('#AssignedUserId, #Priority').on('change', function() {
+                updatePreview();
+            });
+
+            // Form gönderme kontrolü
+            $('#createTaskForm').on('submit', function(e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Oluşturuluyor...');
+            });
+
+            // Sayfa yüklendiğinde kontroller
+            checkDueDate();
+        });
+
+        function updateCharCount(inputSelector, counterSelector) {
+            const length = $(inputSelector).val().length;
+            const maxLength = $(inputSelector).attr('maxlength');
+            $(counterSelector).text(length);
+
+            if (length > maxLength * 0.9) {
+                $(counterSelector).addClass('text-warning font-weight-bold');
+            } else {
+                $(counterSelector).removeClass('text-warning font-weight-bold');
+            }
+        }
+
+        function checkDueDate() {
+            const dueDate = new Date($('#dueDateInput').val());
+            const now = new Date();
+            const infoElement = $('#dueDateInfo');
+
+            if (dueDate) {
+                const diffTime = dueDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays < 0) {
+                    infoElement.html('<span class="text-danger"><i class="fas fa-exclamation-triangle mr-1"></i>Bu tarih geçmişte! Lütfen gelecek bir tarih seçin.</span>');
+                } else if (diffDays === 0) {
+                    infoElement.html('<span class="text-warning"><i class="fas fa-clock mr-1"></i>Bugün bitiyor! Acil görev.</span>');
+                } else if (diffDays === 1) {
+                    infoElement.html('<span class="text-warning"><i class="fas fa-clock mr-1"></i>Yarın bitiyor! Acil görev.</span>');
+                } else if (diffDays <= 7) {
+                    infoElement.html('<span class="text-info"><i class="fas fa-calendar mr-1"></i>' + diffDays + ' gün süre - Kısa vadeli görev</span>');
+                } else if (diffDays <= 30) {
+                    infoElement.html('<span class="text-success"><i class="fas fa-calendar-check mr-1"></i>' + diffDays + ' gün süre - Orta vadeli görev</span>');
+                } else {
+                    infoElement.html('<span class="text-primary"><i class="fas fa-calendar-plus mr-1"></i>' + diffDays + ' gün süre - Uzun vadeli görev</span>');
+                }
+            }
+        }
+
+        function validateForm() {
+            let isValid = true;
+            $('.is-invalid').removeClass('is-invalid');
+
+            // Zorunlu alanları kontrol et
+            if (!$('#Title').val().trim()) {
+                showError('#Title', 'Görev başlığı zorunludur');
+                isValid = false;
+            }
+
+            if (!$('#Description').val().trim()) {
+                showError('#Description', 'Görev açıklaması zorunludur');
+                isValid = false;
+            }
+
+            if (!$('#AssignedUserId').val()) {
+                showError('#AssignedUserId', 'Personel seçimi zorunludur');
+                isValid = false;
+            }
+
+            if (!$('#Priority').val()) {
+                showError('#Priority', 'Öncelik seçimi zorunludur');
+                isValid = false;
+            }
+
+            if (!$('#dueDateInput').val()) {
+                showError('#dueDateInput', 'Bitiş tarihi zorunludur');
+                isValid = false;
+            }
+
+            // Tarih kontrolü
+            const dueDate = new Date($('#dueDateInput').val());
+            const now = new Date();
+            if (dueDate <= now) {
+                showError('#dueDateInput', 'Bitiş tarihi gelecekte olmalıdır');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                $('html, body').animate({
+                    scrollTop: $('.is-invalid').first().offset().top - 100
+                }, 500);
+            }
+
+            return isValid;
+        }
+
+        function showError(selector, message) {
+            $(selector).addClass('is-invalid');
+            $(selector).next('.text-danger').text(message);
+        }
+
+        function togglePreview() {
+            const card = $('#previewCard');
+            if (card.is(':visible')) {
+                card.slideUp();
+            } else {
+                updatePreview();
+                card.slideDown();
+            }
+        }
+
+        function updatePreview() {
+            $('#previewTitle').text($('#Title').val() || 'Henüz girilmedi');
+            $('#previewAssigned').text($('#AssignedUserId option:selected').text() || 'Henüz seçilmedi');
+            $('#previewDescription').text($('#Description').val() || 'Henüz girilmedi');
+
+            const priority = $('#Priority option:selected').text() || 'Henüz seçilmedi';
+            const priorityBadge = $('#Priority').val() === '0' ? 'badge-secondary' :
+                                 $('#Priority').val() === '1' ? 'badge-primary' :
+                                 $('#Priority').val() === '2' ? 'badge-danger' : 'badge-light';
+            $('#previewPriority').html(priority !== 'Henüz seçilmedi' ?
+                '<span class="badge ' + priorityBadge + '">' + priority + '</span>' : priority);
+
+            const dueDate = $('#dueDateInput').val();
+            $('#previewDueDate').text(dueDate ?
+                new Date(dueDate).toLocaleDateString('tr-TR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : 'Henüz seçilmedi');
+        }
+
+        function resetForm() {
+            if (confirm('Tüm girilen bilgiler silinecek. Emin misiniz?')) {
+                $('#createTaskForm')[0].reset();
+                $('.is-invalid').removeClass('is-invalid');
+                $('#titleCounter, #descCounter, #commentCounter').text('0');
+                $('#dueDateInfo').empty();
+                $('#previewCard').hide();
+                $('#Title').focus();
+            }
+        }
+
+        // Enter tuşu ile form geçişi (textarea hariç)
+        $('input, select').on('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                const inputs = $('input, select, textarea').not(':hidden');
+                const index = inputs.index(this);
+                if (index < inputs.length - 1) {
+                    inputs.eq(index + 1).focus();
+                }
+            }
+        });
+
+        // Otomatik odaklanma
+        $(document).ready(function() {
+            $('#Title').focus();
+        });
+    </script>
 }

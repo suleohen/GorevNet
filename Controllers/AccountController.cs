@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using GorevNet.Identitiy;
+using GorevNet.ViewModels;
 
 namespace GorevNet.Controllers
 {
@@ -25,7 +26,7 @@ namespace GorevNet.Controllers
         }
 
         #region Login
-
+        
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> Login(string returnUrl = null)
@@ -75,16 +76,28 @@ namespace GorevNet.Controllers
                                 return RedirectToAction("ChangePassword");
                             }
 
-                            // Kullanıcı rolüne göre yönlendirme
+                            // Kullanıcı rolüne göre yönlendirme - DÜZELTME BURADA
                             var roles = await _userManager.GetRolesAsync(user);
 
                             if (roles.Contains("Admin") || roles.Contains("Manager"))
                             {
-                                return RedirectToLocal(returnUrl) ?? RedirectToAction("Dashboard", "Admin");
+                                // Admin veya Manager ise Dashboard'a yönlendir
+                                return !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)
+                                    ? Redirect(returnUrl)
+                                    : RedirectToAction("Index", "Admin");
+                            }
+                            else if (roles.Contains("Employee"))
+                            {
+                                // Employee ise Employee Index'e yönlendir
+                                return !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)
+                                    ? Redirect(returnUrl)
+                                    : RedirectToAction("Index", "Employee");
                             }
                             else
                             {
-                                return RedirectToLocal(returnUrl) ?? RedirectToAction("Index", "Employee");
+                                // Hiçbir rol yoksa varsayılan
+                                ModelState.AddModelError(string.Empty, "Hesabınız için uygun rol tanımlanmamış. Lütfen yöneticinizle iletişime geçin.");
+                                await _signInManager.SignOutAsync();
                             }
                         }
                         else
@@ -102,8 +115,6 @@ namespace GorevNet.Controllers
                         ModelState.AddModelError(string.Empty, "Email veya şifre hatalı.");
                         await _signInManager.SignOutAsync();
                     }
-
-
                 }
                 else
                 {
@@ -188,7 +199,6 @@ namespace GorevNet.Controllers
 
             return View(model);
         }
-
         #endregion
 
         #region Forgot Password
@@ -240,17 +250,163 @@ namespace GorevNet.Controllers
 
         #endregion
 
+        #region Profile Management
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Profile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            var employee = _context.Employees.FirstOrDefault(e => e.Email == user.Email);
+            if (employee == null)
+            {
+                TempData["ErrorMessage"] = "Kullanıcı bilgileri bulunamadı.";
+                return RedirectToAction("Login");
+            }
+
+            // Görev istatistikleri
+            var totalTasks = _context.UserTasks.Count(t => t.AssignedUserId == employee.Id);
+            var completedTasks = _context.UserTasks.Count(t => t.AssignedUserId == employee.Id && t.Status == GorevNet.Models.TaskStatus.Tamamlandı);
+            var pendingTasks = _context.UserTasks.Count(t => t.AssignedUserId == employee.Id && t.Status == GorevNet.Models.TaskStatus.Beklemede);
+            var ongoingTasks = _context.UserTasks.Count(t => t.AssignedUserId == employee.Id && t.Status == GorevNet.Models.TaskStatus.DevamEdiyor);
+
+            // Son 5 görevi getir
+            var recentTasks = _context.UserTasks
+                .Where(t => t.AssignedUserId == employee.Id)
+                .OrderByDescending(t => t.CreatedDate)
+                .Take(5)
+                .ToList();
+
+            var model = new UserProfileViewModel
+            {
+                Id = employee.Id,
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                Email = employee.Email,
+                Department = employee.Department,
+                Position = employee.Position,
+                HireDate = employee.HireDate,
+                IsActive = employee.IsActive,
+                TotalTasks = totalTasks,
+                CompletedTasks = completedTasks,
+                PendingTasks = pendingTasks,
+                OngoingTasks = ongoingTasks,
+                RecentTasks = recentTasks
+            };
+
+            return View(model);
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> EditProfile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            var employee = _context.Employees.FirstOrDefault(e => e.Email == user.Email);
+            if (employee == null)
+            {
+                TempData["ErrorMessage"] = "Kullanıcı bilgileri bulunamadı.";
+                return RedirectToAction("Login");
+            }
+
+            var model = new UserProfileViewModel
+            {
+                Id = employee.Id,
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                Email = employee.Email,
+                Department = employee.Department,
+                Position = employee.Position,
+                HireDate = employee.HireDate,
+                IsActive = employee.IsActive
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProfile(UserProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            var employee = _context.Employees.FirstOrDefault(e => e.Id == model.Id);
+            if (employee == null)
+            {
+                TempData["ErrorMessage"] = "Kullanıcı bilgileri bulunamadı.";
+                return RedirectToAction("Profile");
+            }
+
+            // Sadece kullanıcının değiştirebileceği alanları güncelle
+            employee.FirstName = model.FirstName;
+            employee.LastName = model.LastName;
+
+            // Email değişikliği kontrolü (genelde admin işlemi)
+            if (employee.Email != model.Email)
+            {
+                // Email değişikliği için ek kontroller yapılabilir
+                var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                if (existingUser != null && existingUser.Id != user.Id)
+                {
+                    ModelState.AddModelError("Email", "Bu email adresi zaten kullanımda.");
+                    return View(model);
+                }
+
+                employee.Email = model.Email;
+                user.Email = model.Email;
+                user.UserName = model.Email;
+                await _userManager.UpdateAsync(user);
+            }
+
+            employee.ModifiedBy = user.UserName;
+            employee.ModifiedDate = DateTime.Now;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Profil bilgileriniz başarıyla güncellendi.";
+                return RedirectToAction("Profile");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, "Güncelleme sırasında bir hata oluştu: " + ex.Message);
+                return View(model);
+            }
+        }
+
+        #endregion
+
         #region Helper Methods
 
         private IActionResult RedirectToLocal(string returnUrl)
         {
-            if (Url.IsLocalUrl(returnUrl))
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
                 return Redirect(returnUrl);
             }
             else
             {
-                return RedirectToAction("Index", "Home");
+                return null; // Null döndür ki ?? operator sonraki seçeneği kullansın
             }
         }
 

@@ -31,18 +31,26 @@ namespace GorevNet.Controllers
         #region Dashboard
         public async Task<IActionResult> Index()
         {
+            Console.WriteLine("=== EMPLOYEE INDEX BAŞLADI ===");
+
             var user = await _userManager.GetUserAsync(User);
+            Console.WriteLine($"User: {user?.Email ?? "NULL"}");
+
             if (user == null)
             {
+                Console.WriteLine("User null, Login'e yönlendiriliyor");
                 return RedirectToAction("Login", "Account");
             }
 
             var employee = _context.Employees.FirstOrDefault(e => e.Email == user.Email && e.IsActive);
             if (employee == null)
             {
+                Console.WriteLine("Employee bulunamadı, Login'e yönlendiriliyor");
                 TempData["ErrorMessage"] = "Çalışan bilgileri bulunamadı.";
                 return RedirectToAction("Login", "Account");
             }
+
+            Console.WriteLine("Employee Index normal akış devam ediyor");
 
             // Dashboard için temel bilgileri al
             var myTasks = _context.UserTasks
@@ -320,5 +328,19 @@ namespace GorevNet.Controllers
             }
         }
         #endregion
+        public IActionResult TestAccess()
+        {
+            return Content($@"
+        <h2>Employee Controller Test</h2>
+        <p><strong>Authenticated:</strong> {User.Identity.IsAuthenticated}</p>
+        <p><strong>User Name:</strong> {User.Identity.Name}</p>
+        <p><strong>User Email:</strong> {User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "No email claim"}</p>
+        <p><strong>Roles:</strong> {string.Join(", ", User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value))}</p>
+        <p><strong>Current Time:</strong> {DateTime.Now}</p>
+        <hr>
+        <a href='/Employee/Index'>Employee Index'e git</a><br>
+        <a href='/Home/Index'>Home Index'e git</a>
+    ");
+        }
     }
 }

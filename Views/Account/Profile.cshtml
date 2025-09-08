@@ -1,0 +1,270 @@
+﻿@model GorevNet.Models.ViewModels.UserProfileViewModel
+@{
+    ViewBag.Title = "Profilim";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-user"></i> Profilim
+                    </h4>
+                    <a href="@Url.Action("EditProfile", "Account")" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Profili Düzenle
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Kullanıcı Bilgileri -->
+                        <div class="col-md-4">
+                            <div class="text-center mb-4">
+                                <div class="avatar-lg mx-auto mb-3">
+                                    <div class="avatar-title bg-primary rounded-circle display-4">
+                                        @Model.FirstName.Substring(0, 1).ToUpper()@Model.LastName.Substring(0, 1).ToUpper()
+                                    </div>
+                                </div>
+                                <h4 class="mb-1">@Model.FullName</h4>
+                                <p class="text-muted mb-2">@Model.Position</p>
+                                <p class="text-muted">@Model.Department</p>
+                                <span class="badge @(Model.IsActive ? "badge-success" : "badge-danger") mb-3">
+                                    @(Model.IsActive ? "Aktif" : "Pasif")
+                                </span>
+                            </div>
+
+                            <div class="card border">
+                                <div class="card-body">
+                                    <h5 class="card-title">İletişim Bilgileri</h5>
+                                    <div class="mb-2">
+                                        <i class="fas fa-envelope text-muted me-2"></i>
+                                        <strong>Email:</strong> @Model.Email
+                                    </div>
+                                    <div class="mb-2">
+                                        <i class="fas fa-calendar text-muted me-2"></i>
+                                        <strong>İşe Giriş:</strong> @Model.HireDate.ToString("dd/MM/yyyy")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- İstatistikler -->
+                        <div class="col-md-8">
+                            <div class="row mb-4">
+                                <div class="col-sm-6 col-lg-3">
+                                    <div class="card bg-primary text-white">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <h4 class="mb-1 text-white">@Model.TotalTasks</h4>
+                                                    <p class="mb-0">Toplam Görev</p>
+                                                </div>
+                                                <div class="flex-shrink-0">
+                                                    <i class="fas fa-tasks fa-2x"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6 col-lg-3">
+                                    <div class="card bg-success text-white">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <h4 class="mb-1 text-white">@Model.CompletedTasks</h4>
+                                                    <p class="mb-0">Tamamlanan</p>
+                                                </div>
+                                                <div class="flex-shrink-0">
+                                                    <i class="fas fa-check-circle fa-2x"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6 col-lg-3">
+                                    <div class="card bg-warning text-white">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <h4 class="mb-1 text-white">@Model.OngoingTasks</h4>
+                                                    <p class="mb-0">Devam Eden</p>
+                                                </div>
+                                                <div class="flex-shrink-0">
+                                                    <i class="fas fa-clock fa-2x"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6 col-lg-3">
+                                    <div class="card bg-info text-white">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <h4 class="mb-1 text-white">@Model.PendingTasks</h4>
+                                                    <p class="mb-0">Bekleyen</p>
+                                                </div>
+                                                <div class="flex-shrink-0">
+                                                    <i class="fas fa-pause-circle fa-2x"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Başarı Oranı -->
+
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Görev Başarı Oranı</h5>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: @Model.CompletionRate%;" 
+                                             aria-valuenow="@Model.CompletionRate" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            %@Math.Round(Model.CompletionRate, 1)
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">@Model.CompletedTasks / @Model.TotalTasks görev tamamlandı</small>
+                                </div>
+                            </div>
+                            <!-- Son Görevler -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Son Görevler</h5>
+                                </div>
+                                <div class="card-body">
+                                    @if (Model.RecentTasks.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Görev</th>
+                                                        <th>Durum</th>
+                                                        <th>Öncelik</th>
+                                                        <th>Bitiş Tarihi</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var task in Model.RecentTasks)
+                                                    {
+                                                        <tr>
+                                                            <td>
+                                                                <strong>@task.Title</strong>
+                                                                @if (!string.IsNullOrEmpty(task.Description) && task.Description.Length > 50)
+                                                                {
+                                                                    <br><small class="text-muted">@task.Description.Substring(0, 50)...</small>
+                                                                }
+                                                                else if (!string.IsNullOrEmpty(task.Description))
+                                                                {
+                                                                    <br><small class="text-muted">@task.Description</small>
+                                                                }
+                                                            </td>
+                                                            <td>
+                                                                @{
+                                                                    string statusClass = task.Status switch
+                                                                    {
+                                                                        GorevNet.Models.TaskStatus.Tamamlandı => "badge-success",
+                                                                        GorevNet.Models.TaskStatus.DevamEdiyor => "badge-warning",
+                                                                        GorevNet.Models.TaskStatus.Beklemede => "badge-info",
+                                                                        _ => "badge-secondary"
+                                                                    };
+
+                                                                    string statusText = task.Status switch
+                                                                    {
+                                                                        GorevNet.Models.TaskStatus.Tamamlandı => "Tamamlandı",
+                                                                        GorevNet.Models.TaskStatus.DevamEdiyor => "Devam Ediyor",
+                                                                        GorevNet.Models.TaskStatus.Beklemede => "Beklemede",
+                                                                        _ => "Bilinmiyor"
+                                                                    };
+                                                                }
+                                                                <span class="badge @statusClass">@statusText</span>
+                                                            </td>
+                                                            <td>
+                                                                @{
+                                                                    string priorityClass = task.Priority switch
+                                                                    {
+                                                                        GorevNet.Models.TaskPriority.Yüksek => "badge-danger",
+                                                                        GorevNet.Models.TaskPriority.Normal => "badge-primary",
+                                                                        GorevNet.Models.TaskPriority.Düşük => "badge-secondary",
+                                                                        _ => "badge-secondary"
+                                                                    };
+
+                                                                    string priorityText = task.Priority switch
+                                                                    {
+                                                                        GorevNet.Models.TaskPriority.Yüksek => "Yüksek",
+                                                                        GorevNet.Models.TaskPriority.Normal => "Normal",
+                                                                        GorevNet.Models.TaskPriority.Düşük => "Düşük",
+                                                                        _ => "Bilinmiyor"
+                                                                    };
+                                                                }
+                                                                <span class="badge @priorityClass">@priorityText</span>
+                                                            </td>
+                                                            <td>
+                                                                @if (task.DueDate.HasValue)
+                                                                {
+                                                                    @task.DueDate.Value.ToString("dd/MM/yyyy")
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="text-muted">-</span>
+                                                                }
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-center text-muted py-4">
+                                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                                            <p>Henüz görev bulunmuyor.</p>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-lg {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .avatar-title {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+    }
+    
+    .progress {
+        border-radius: 10px;
+    }
+    
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+</style>

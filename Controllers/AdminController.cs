@@ -36,23 +36,34 @@ namespace GorevNet.Controllers
             return RedirectToAction("Dashboard");
         }
 
-        /*public IActionResult Dashboard()
+        public IActionResult Dashboard()
         {
-            var dashboardData = new ManagerDashboardViewModel
+            try
             {
-                TotalEmployees = _context.Employees.Count(e => e.IsActive),
-                ActiveTasks = _context.UserTasks.Count(t => t.Status != TaskStatus.Tamamlandı),
-                PendingTasks = _context.UserTasks.Count(t => t.Status == TaskStatus.Beklemede),
-                OverdueTasks = _context.UserTasks.Count(t => t.DueDate < DateTime.Now && t.Status != TaskStatus.Tamamlandı),
-                RecentEmployees = _context.Employees
-                    .Where(e => e.IsActive)
-                    .OrderByDescending(e => e.HireDate)
-                    .Take(5)
-                    .ToList()
-            };
+                var dashboardData = new ManagerDashboardViewModel
+                {
+                    TotalEmployees = _context.Employees.Count(e => e.IsActive),
+                    ActiveTasks = _context.UserTasks.Count(t => t.Status != GorevNet.Models.TaskStatus.Tamamlandı),
+                    PendingTasks = _context.UserTasks.Count(t => t.Status == GorevNet.Models.TaskStatus.Beklemede),
+                    OverdueTasks = _context.UserTasks.Count(t => t.DueDate < DateTime.Now && t.Status != GorevNet.Models.TaskStatus.Tamamlandı),
+                    CompletedTasks = _context.UserTasks.Count(t => t.Status == GorevNet.Models.TaskStatus.Tamamlandı),
+                    OngoingTasks = _context.UserTasks.Count(t => t.Status == GorevNet.Models.TaskStatus.DevamEdiyor),
+                    RecentEmployees = _context.Employees
+                        .Where(e => e.IsActive)
+                        .OrderByDescending(e => e.HireDate)
+                        .Take(5)
+                        .ToList()
+                };
 
-            return View(dashboardData);
-        }*/
+                return View(dashboardData);
+            }
+            catch (Exception ex)
+            {
+                // Hata durumunda debug için
+                TempData["ErrorMessage"] = $"Dashboard yüklenirken hata: {ex.Message}";
+                return RedirectToAction("Index");
+            }
+        }
 
         #endregion
 
@@ -60,8 +71,27 @@ namespace GorevNet.Controllers
         #region Görev Yönetimi
         public IActionResult ActiveTasks()
         {
-            var tasks = _context.UserTasks.ToList();
-            return View(tasks);
+            var tasksWithEmployeeNames = (from task in _context.UserTasks
+                                          join employee in _context.Employees
+                                          on task.AssignedUserId equals employee.Id
+                                          select new TaskDisplayViewModel
+                                          {
+                                              Id = task.Id,
+                                              Title = task.Title,
+                                              Description = task.Description,
+                                              Status = task.Status,
+                                              Priority = task.Priority,
+                                              CreatedDate = task.CreatedDate,
+                                              DueDate = task.DueDate,
+                                              Comment = task.Comment,
+                                              AssignedUserId = task.AssignedUserId,
+                                              AssignedUserName = employee.FirstName + " " + employee.LastName,
+                                              CreatedBy = task.CreatedBy,
+                                              ModifiedBy = task.ModifiedBy,
+                                              ModifiedDate = task.ModifiedDate
+                                          }).ToList();
+
+            return View(tasksWithEmployeeNames);
         }
 
         [HttpGet]
@@ -173,18 +203,50 @@ namespace GorevNet.Controllers
         }
 
 
+        [HttpGet]
+        public IActionResult TaskDetails(int id)
+        {
+            var task = _context.UserTasks.FirstOrDefault(t => t.Id == id);
+            if (task == null)
+            {
+                TempData["ErrorMessage"] = "Görev bulunamadı.";
+                return RedirectToAction("ActiveTasks");
+            }
+
+            var employee = _context.Employees.FirstOrDefault(e => e.Id == task.AssignedUserId);
+
+            var taskDetail = new TaskDisplayViewModel
+            {
+                Id = task.Id,
+                Title = task.Title,
+                Description = task.Description,
+                Status = task.Status,
+                Priority = task.Priority,
+                CreatedDate = task.CreatedDate,
+                DueDate = task.DueDate,
+                Comment = task.Comment,
+                AssignedUserId = task.AssignedUserId,
+                AssignedUserName = employee != null ? $"{employee.FirstName} {employee.LastName}" : "Bilinmiyor",
+                CreatedBy = task.CreatedBy,
+                ModifiedBy = task.ModifiedBy,
+                ModifiedDate = task.ModifiedDate
+            };
+
+            return View(taskDetail);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteTask(int id)
         {
-            var task = _context.UserTasks.FirstOrDefault(x => x.Id == id);
-            if (task == null)
-            {
-                return Json(new { success = false, message = "Görev bulunamadı." });
-            }
-
             try
             {
+                var task = _context.UserTasks.FirstOrDefault(x => x.Id == id);
+                if (task == null)
+                {
+                    return Json(new { success = false, message = "Görev bulunamadı." });
+                }
+
                 _context.UserTasks.Remove(task);
                 await _context.SaveChangesAsync();
 
@@ -192,10 +254,9 @@ namespace GorevNet.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Bir hata oluştu: " + ex.Message });
+                return Json(new { success = false, message = "Silme işlemi sırasında bir hata oluştu: " + ex.Message });
             }
         }
-
 
         #endregion
 
@@ -338,15 +399,28 @@ namespace GorevNet.Controllers
             }
         }
 
-       
+
 
         [HttpGet]
-        public IActionResult EditEmployee(int id)
+        public async Task<IActionResult> EditEmployee(int id)
         {
             var employee = _context.Employees.FirstOrDefault(e => e.Id == id);
             if (employee == null)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "Personel bulunamadı.";
+                return RedirectToAction("ListEmployee");
+            }
+
+            // Identity kullanıcısını bul ve rolünü al
+            string currentRole = "Employee"; // Varsayılan rol
+            if (!string.IsNullOrEmpty(employee.UserId))
+            {
+                var user = await _userManager.FindByIdAsync(employee.UserId);
+                if (user != null)
+                {
+                    var roles = await _userManager.GetRolesAsync(user);
+                    currentRole = roles.FirstOrDefault() ?? "Employee";
+                }
             }
 
             var model = new EditEmployeeViewModel
@@ -358,7 +432,9 @@ namespace GorevNet.Controllers
                 Department = employee.Department,
                 Position = employee.Position,
                 HireDate = employee.HireDate,
-                IsActive = employee.IsActive
+                IsActive = employee.IsActive,
+                CurrentRole = currentRole,
+                NewRole = currentRole
             };
 
             PopulateDepartments(model);
@@ -374,11 +450,29 @@ namespace GorevNet.Controllers
                 var employee = _context.Employees.FirstOrDefault(e => e.Id == model.Id);
                 if (employee == null)
                 {
-                    return NotFound();
+                    TempData["ErrorMessage"] = "Personel bulunamadı.";
+                    return RedirectToAction("ListEmployee");
                 }
 
                 try
                 {
+                    // Email değişimi kontrolü
+                    bool emailChanged = employee.Email != model.Email;
+
+                    if (emailChanged)
+                    {
+                        // Yeni email'in kullanımda olup olmadığını kontrol et
+                        var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                        var currentUser = string.IsNullOrEmpty(employee.UserId) ? null : await _userManager.FindByIdAsync(employee.UserId);
+
+                        if (existingUser != null && (currentUser == null || existingUser.Id != currentUser.Id))
+                        {
+                            ModelState.AddModelError("Email", "Bu email adresi zaten kullanımda.");
+                            PopulateDepartments(model);
+                            return View(model);
+                        }
+                    }
+
                     // Employee bilgilerini güncelle
                     employee.FirstName = model.FirstName;
                     employee.LastName = model.LastName;
@@ -386,19 +480,42 @@ namespace GorevNet.Controllers
                     employee.Department = model.Department;
                     employee.Position = model.Position;
                     employee.IsActive = model.IsActive;
+                    employee.ModifiedBy = User.Identity.Name;
+                    employee.ModifiedDate = DateTime.Now;
 
-                    // Identity User'ı da güncelle
-                    var user = await _userManager.FindByIdAsync(employee.UserId.ToString());
-                    if (user != null)
+                    // Identity kullanıcısını güncelle
+                    if (!string.IsNullOrEmpty(employee.UserId))
                     {
-                        user.Email = model.Email;
-                        user.UserName = model.Email;
-                        await _userManager.UpdateAsync(user);
+                        var user = await _userManager.FindByIdAsync(employee.UserId);
+                        if (user != null)
+                        {
+                            // Email güncelleme
+                            if (emailChanged)
+                            {
+                                user.Email = model.Email;
+                                user.UserName = model.Email;
+                                await _userManager.UpdateAsync(user);
+                            }
+
+                            // Rol güncelleme
+                            if (!string.IsNullOrEmpty(model.NewRole) && model.CurrentRole != model.NewRole)
+                            {
+                                // Eski rolü kaldır
+                                if (!string.IsNullOrEmpty(model.CurrentRole))
+                                {
+                                    await _userManager.RemoveFromRoleAsync(user, model.CurrentRole);
+                                }
+
+                                // Yeni rolü ekle
+                                await _userManager.AddToRoleAsync(user, model.NewRole);
+                            }
+                        }
                     }
 
                     await _context.SaveChangesAsync();
+
                     TempData["SuccessMessage"] = "Personel bilgileri başarıyla güncellendi.";
-                    return RedirectToAction("EmployeeManagement");
+                    return RedirectToAction("ListEmployee");
                 }
                 catch (Exception ex)
                 {
@@ -493,6 +610,110 @@ namespace GorevNet.Controllers
                 return Json(new { success = false, message = "Bir hata oluştu: " + ex.Message });
             }
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteEmployee(int id)
+        {
+            try
+            {
+                var employee = _context.Employees.FirstOrDefault(x => x.Id == id);
+                if (employee == null)
+                {
+                    return Json(new { success = false, message = "Personel bulunamadı." });
+                }
+
+                // Identity User'ı da bul ve sil
+                if (!string.IsNullOrEmpty(employee.UserId))
+                {
+                    var user = await _userManager.FindByIdAsync(employee.UserId);
+                    if (user != null)
+                    {
+                        // Önce Identity User'ı sil
+                        var deleteUserResult = await _userManager.DeleteAsync(user);
+                        if (!deleteUserResult.Succeeded)
+                        {
+                            return Json(new
+                            {
+                                success = false,
+                                message = "Kullanıcı hesabı silinirken hata oluştu: " +
+                                          string.Join(", ", deleteUserResult.Errors.Select(e => e.Description))
+                            });
+                        }
+                    }
+                }
+
+                // Personelin aktif görevlerini kontrol et
+                var activeTasks = _context.UserTasks
+                    .Where(t => t.AssignedUserId == id && t.Status != Models.TaskStatus.Tamamlandı)
+                    .ToList();
+
+                if (activeTasks.Any())
+                {
+                    // Aktif görevleri askıya al veya başka birine ata
+                    foreach (var task in activeTasks)
+                    {
+                        task.Status = Models.TaskStatus.Beklemede;
+                        task.Comment = $"Personel silindiği için görev askıya alındı - {DateTime.Now:dd.MM.yyyy HH:mm}";
+                        task.ModifiedBy = User.Identity.Name;
+                        task.ModifiedDate = DateTime.Now;
+                    }
+                }
+
+                // Employee'yi sil
+                _context.Employees.Remove(employee);
+                await _context.SaveChangesAsync();
+
+                string message = activeTasks.Any()
+                    ? $"Personel başarıyla silindi. {activeTasks.Count} aktif görev askıya alındı."
+                    : "Personel başarıyla silindi.";
+
+                return Json(new { success = true, message = message });
+            }
+            catch (Exception ex)
+            {
+                // Hata loglaması ekleyin
+                // _logger.LogError(ex, "Personel silme hatası - ID: {EmployeeId}", id);
+
+                return Json(new
+                {
+                    success = false,
+                    message = "Silme işlemi sırasında bir hata oluştu: " + ex.Message
+                });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult DetailEmployee(int id)
+        {
+            var employee = _context.Employees.FirstOrDefault(e => e.Id == id);
+            if (employee == null)
+            {
+                TempData["ErrorMessage"] = "Personel bulunamadı.";
+                return RedirectToAction("ListEmployee");
+            }
+
+            // Bu personele ait görevleri al
+            var employeeTasks = _context.UserTasks
+                .Where(t => t.AssignedUserId == employee.Id)
+                .OrderByDescending(t => t.CreatedDate)
+                .ToList();
+
+            // Görev istatistikleri
+            var taskStats = new
+            {
+                TotalTasks = employeeTasks.Count,
+                CompletedTasks = employeeTasks.Count(t => t.Status == GorevNet.Models.TaskStatus.Tamamlandı),
+                PendingTasks = employeeTasks.Count(t => t.Status == GorevNet.Models.TaskStatus.Beklemede),
+                OngoingTasks = employeeTasks.Count(t => t.Status == GorevNet.Models.TaskStatus.DevamEdiyor)
+            };
+
+            ViewBag.TaskStats = taskStats;
+            ViewBag.EmployeeTasks = employeeTasks;
+
+            return View(employee);
+        }
+
 
         #endregion
 

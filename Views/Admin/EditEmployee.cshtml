@@ -1,0 +1,236 @@
+﻿@model GorevNet.Models.ViewModels.EditEmployeeViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Personel Düzenle";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Personel Düzenle</h1>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Personel Bilgileri</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="EditEmployee" method="post" class="user">
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(m => m.Id)
+                    @Html.HiddenFor(m => m.CurrentRole)
+
+                    <!-- Form validation hataları -->
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+                        </div>
+                    }
+
+                    <div class="form-group row">
+                        <!-- FirstName -->
+                        <div class="col-sm-6 mb-3">
+                            <label asp-for="FirstName" class="control-label font-weight-bold"></label>
+                            <input asp-for="FirstName" class="form-control form-control-user" placeholder="Ad" required />
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+                        <!-- LastName -->
+                        <div class="col-sm-6 mb-3">
+                            <label asp-for="LastName" class="control-label font-weight-bold"></label>
+                            <input asp-for="LastName" class="form-control form-control-user" placeholder="Soyad" required />
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <!-- Email -->
+                        <div class="col-sm-6 mb-3">
+                            <label asp-for="Email" class="control-label font-weight-bold"></label>
+                            <input asp-for="Email" class="form-control form-control-user" placeholder="Email" required />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <!-- HireDate -->
+                        <div class="col-sm-6 mb-3">
+                            <label asp-for="HireDate" class="control-label font-weight-bold"></label>
+                            <input asp-for="HireDate" type="date" class="form-control form-control-user" />
+                            <span asp-validation-for="HireDate" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <!-- Department (Dropdown) -->
+                        <div class="col-sm-6 mb-3">
+                            <label asp-for="Department" class="control-label font-weight-bold"></label>
+                            <select asp-for="Department" asp-items="@(new SelectList(Model.Departments, Model.Department))"
+                                    class="form-control form-control-user" required>
+                                <option value="">Departman Seç</option>
+                            </select>
+                            <span asp-validation-for="Department" class="text-danger"></span>
+                        </div>
+                        <!-- Position -->
+                        <div class="col-sm-6 mb-3">
+                            <label asp-for="Position" class="control-label font-weight-bold"></label>
+                            <input asp-for="Position" class="form-control form-control-user" placeholder="Pozisyon" />
+                            <span asp-validation-for="Position" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <!-- Role (Dropdown) -->
+                        <div class="col-sm-6 mb-3">
+                            <label asp-for="NewRole" class="control-label font-weight-bold">Rol</label>
+                            <select asp-for="NewRole" class="form-control form-control-user">
+                                <option value="">Rol Seç</option>
+                                @if (Model.Roles != null)
+                                {
+                                    @foreach (var role in Model.Roles)
+                                    {
+                                        <option value="@role" selected="@(role == Model.NewRole)">@role</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="NewRole" class="text-danger"></span>
+                            <small class="form-text text-muted">Mevcut rol: <strong>@Model.CurrentRole</strong></small>
+                        </div>
+                        <!-- IsActive -->
+                        <div class="col-sm-6 mb-3">
+                            <label class="control-label font-weight-bold">Durum</label>
+                            <div class="form-check" style="margin-top: 8px;">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox" id="isActiveCheck">
+                                <label class="form-check-label" for="isActiveCheck">
+                                    Aktif
+                                </label>
+                            </div>
+                            <span asp-validation-for="IsActive" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-user">
+                            <i class="fas fa-save"></i> Güncelle
+                        </button>
+                        <a asp-action="ListEmployee" class="btn btn-secondary btn-user">
+                            <i class="fas fa-arrow-left"></i> İptal
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bilgi Paneli -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-info-circle"></i> Bilgi
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <small>
+                        <strong>Not:</strong> Email değişikliği yapıldığında kullanıcının giriş bilgileri de güncellenecektir.
+                    </small>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <small>
+                        <strong>Uyarı:</strong> Rol değişikliği yapıldığında kullanıcının yetkileri değişecektir.
+                    </small>
+                </div>
+
+                <div class="border-top pt-3">
+                    <h6>Hızlı İşlemler:</h6>
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("DetailEmployee", "Admin", new { id = Model.Id })" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye"></i> Detayları Görüntüle
+                        </a>
+                        <button type="button" class="btn btn-outline-warning btn-sm" 
+                                onclick="resetPassword(@Model.Id)">
+                            <i class="fas fa-key"></i> Şifre Sıfırla
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <!-- Anti-forgery token for AJAX -->
+    @Html.AntiForgeryToken()
+    
+    <script>
+        function resetPassword(employeeId) {
+            if (confirm('Bu personelin şifresini sıfırlamak istediğinizden emin misiniz?')) {
+                $.ajax({
+                    url: '@Url.Action("ResetEmployeePassword", "Admin")',
+                    type: 'POST',
+                    data: {
+                        id: employeeId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (result) {
+                        if (result.success) {
+                            alert('Şifre sıfırlandı. Yeni şifre: ' + result.newPassword);
+                        } else {
+                            alert('Hata: ' + result.message);
+                        }
+                    },
+                    error: function () {
+                        alert('İşlem sırasında bir hata oluştu.');
+                    }
+                });
+            }
+        }
+
+        // Form submit öncesi kontrol
+        $(document).ready(function() {
+            $('form').on('submit', function(e) {
+                var firstName = $('#FirstName').val().trim();
+                var lastName = $('#LastName').val().trim();
+                var email = $('#Email').val().trim();
+                var department = $('#Department').val();
+
+                if (!firstName || !lastName || !email || !department) {
+                    e.preventDefault();
+                    alert('Lütfen tüm zorunlu alanları doldurun.');
+                    return false;
+                }
+
+                // Email format kontrolü
+                var emailPattern = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+                if (!emailPattern.test(email)) {
+                    e.preventDefault();
+                    alert('Lütfen geçerli bir email adresi girin.');
+                    return false;
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,344 @@
+﻿@model GorevNet.Models.Employee
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Personel Detayı";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Personel Detayı</h1>
+    <div>
+        <a href="@Url.Action("EditEmployee", "Admin", new { id = Model.Id })" class="btn btn-warning btn-sm">
+            <i class="fas fa-edit"></i> Düzenle
+        </a>
+        <a href="@Url.Action("ListEmployee", "Admin")" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Geri Dön
+        </a>
+    </div>
+</div>
+
+<!-- Personel Bilgileri Card -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-user"></i> Personel Bilgileri
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Ad Soyad:</th>
+                                <td><strong>@Model.FirstName @Model.LastName</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>@Model.Email</td>
+                            </tr>
+                            <tr>
+                                <th>Departman:</th>
+                                <td>@Model.Department</td>
+                            </tr>
+                            <tr>
+                                <th>Pozisyon:</th>
+                                <td>@Model.Position</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">İşe Başlama:</th>
+                                <td>@Model.HireDate.ToString("dd.MM.yyyy")</td>
+                            </tr>
+                            <tr>
+                                <th>Durum:</th>
+                                <td>
+                                    @if (Model.IsActive)
+                                    {
+                                        <span class="badge badge-success">Aktif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-danger">Pasif</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Çalışma Süresi:</th>
+                                <td>
+                                    @{
+                                        var workDuration = DateTime.Now - Model.HireDate;
+                                        var years = workDuration.Days / 365;
+                                        var months = (workDuration.Days % 365) / 30;
+                                    }
+                                    @years yıl @months ay
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Oluşturan:</th>
+                                <td>@Model.CreatedBy</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- İstatistikler -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-bar"></i> Görev İstatistikleri
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="border-bottom pb-2">
+                            <h4 class="text-primary">@ViewBag.TaskStats.TotalTasks</h4>
+                            <small class="text-muted">Toplam Görev</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="border-bottom pb-2">
+                            <h4 class="text-success">@ViewBag.TaskStats.CompletedTasks</h4>
+                            <small class="text-muted">Tamamlanan</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning">@ViewBag.TaskStats.OngoingTasks</h4>
+                        <small class="text-muted">Devam Eden</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-info">@ViewBag.TaskStats.PendingTasks</h4>
+                        <small class="text-muted">Bekleyen</small>
+                    </div>
+                </div>
+
+                @if (ViewBag.TaskStats.TotalTasks > 0)
+                {
+                    <div class="mt-3">
+                        <div class="progress" style="height: 8px;">
+                            @{
+                                var completionRate = (double)ViewBag.TaskStats.CompletedTasks / ViewBag.TaskStats.TotalTasks * 100;
+                            }
+                            <div class="progress-bar bg-success"
+                                 style="width: @completionRate%"
+                                 title="Tamamlanma Oranı: %@completionRate.ToString("F1")">
+                            </div>
+                        </div>
+                        <small class="text-muted">Başarı Oranı: %@completionRate.ToString("F1")</small>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Hızlı İşlemler -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-tools"></i> Hızlı İşlemler
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm"
+                            onclick="location.href='@Url.Action("CreateTask", "Admin", new { assignedUserId = Model.Id })'">
+                        <i class="fas fa-plus"></i> Yeni Görev Ata
+                    </button>
+
+                    <button type="button" class="btn btn-outline-warning btn-sm"
+                            onclick="resetPassword(@Model.Id)">
+                        <i class="fas fa-key"></i> Şifre Sıfırla
+                    </button>
+
+                    @if (Model.IsActive)
+                    {
+                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                onclick="deactivateEmployee(@Model.Id)">
+                            <i class="fas fa-user-times"></i> Deaktif Et
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-outline-success btn-sm"
+                                onclick="activateEmployee(@Model.Id)">
+                            <i class="fas fa-user-check"></i> Aktif Et
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Görevler Tablosu -->
+@if (ViewBag.EmployeeTasks != null && ((List<GorevNet.Models.UserTask>)ViewBag.EmployeeTasks).Any())
+{
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-tasks"></i> Atanan Görevler
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Görev</th>
+                            <th>Durum</th>
+                            <th>Öncelik</th>
+                            <th>Oluşturma Tarihi</th>
+                            <th>Bitiş Tarihi</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var task in (List<GorevNet.Models.UserTask>)ViewBag.EmployeeTasks)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@task.Title</strong>
+                                    @if (!string.IsNullOrEmpty(task.Description))
+                                    {
+                                        <br>
+
+                                        <small class="text-muted">@task.Description.Substring(0, Math.Min(50, task.Description.Length))...</small>
+                                    }
+                                </td>
+                                <td>
+                                    @{
+                                        string statusClass = task.Status switch
+                                        {
+                                            GorevNet.Models.TaskStatus.Tamamlandı => "badge-success",
+                                            GorevNet.Models.TaskStatus.DevamEdiyor => "badge-warning",
+                                            GorevNet.Models.TaskStatus.Beklemede => "badge-info",
+                                            _ => "badge-secondary"
+                                        };
+
+                                        string statusText = task.Status switch
+                                        {
+                                            GorevNet.Models.TaskStatus.Tamamlandı => "Tamamlandı",
+                                            GorevNet.Models.TaskStatus.DevamEdiyor => "Devam Ediyor",
+                                            GorevNet.Models.TaskStatus.Beklemede => "Beklemede",
+                                            _ => "Bilinmiyor"
+                                        };
+                                    }
+                                    <span class="badge @statusClass">@statusText</span>
+                                </td>
+                                <td>
+                                    @{
+                                        string priorityClass = task.Priority switch
+                                        {
+                                            GorevNet.Models.TaskPriority.Yüksek => "badge-danger",
+                                            GorevNet.Models.TaskPriority.Normal => "badge-primary",
+                                            GorevNet.Models.TaskPriority.Düşük => "badge-secondary",
+                                            _ => "badge-secondary"
+                                        };
+
+                                        string priorityText = task.Priority switch
+                                        {
+                                            GorevNet.Models.TaskPriority.Yüksek => "Yüksek",
+                                            GorevNet.Models.TaskPriority.Normal => "Normal",
+                                            GorevNet.Models.TaskPriority.Düşük => "Düşük",
+                                            _ => "Bilinmiyor"
+                                        };
+                                    }
+                                    <span class="badge @priorityClass">@priorityText</span>
+                                </td>
+                                <td>@task.CreatedDate.ToString("dd.MM.yyyy")</td>
+                                <td>
+                                    @if (task.DueDate.HasValue)
+                                    {
+                                        @task.DueDate.Value.ToString("dd.MM.yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("EditTask", "Admin", new { id = task.Id })"
+                                       class="btn btn-sm btn-warning" title="Düzenle">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card shadow">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-inbox fa-3x text-gray-300 mb-3"></i>
+            <h5 class="text-gray-500">Henüz görev atanmamış</h5>
+            <p class="text-gray-400">Bu personele henüz hiç görev atanmamış.</p>
+            <a href="@Url.Action("CreateTask", "Admin")" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Yeni Görev Ata
+            </a>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function resetPassword(employeeId) {
+            if (confirm('Bu personelin şifresini sıfırlamak istediğinizden emin misiniz?')) {
+                $.ajax({
+                    url: '@Url.Action("ResetEmployeePassword", "Admin")',
+                    type: 'POST',
+                    data: {
+                        id: employeeId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (result) {
+                        if (result.success) {
+                            alert('Şifre sıfırlandı. Yeni şifre: ' + result.newPassword);
+                        } else {
+                            alert('Hata: ' + result.message);
+                        }
+                    },
+                    error: function () {
+                        alert('İşlem sırasında bir hata oluştu.');
+                    }
+                });
+            }
+        }
+
+        function deactivateEmployee(employeeId) {
+            if (confirm('Bu personeli deaktif etmek istediğinizden emin misiniz?')) {
+                $.ajax({
+                    url: '@Url.Action("DeactivateEmployee", "Admin")',
+                    type: 'POST',
+                    data: {
+                        id: employeeId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (result) {
+                        if (result.success) {
+                            alert(result.message);
+                            location.reload();
+                        } else {
+                            alert('Hata: ' + result.message);
+                        }
+                    },
+                    error: function () {
+                        alert('İşlem sırasında bir hata oluştu.');
+                    }
+                });
+            }
+        }
+    </script>
+}
