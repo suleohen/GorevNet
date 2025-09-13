@@ -52,10 +52,6 @@
             <!-- Divider -->
             <hr class="sidebar-divider">
 
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Interface
-            </div>
 
             <!-- Nav Item - Pages Collapse Menu -->
             <li class="nav-item">
@@ -67,8 +63,8 @@
                 <div id="collapseTask" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Görevlerim</h6>
-                        <a class="collapse-item" href="">Aktif Görevlerim</a>
-                        <a class="collapse-item" href="">Tüm Görevlerim</a>
+                        <a class="collapse-item" href="/Employee/ActiveTasks">Aktif Görevlerim</a>
+                        <a class="collapse-item" href="/Employee/AllMyTasks">Tüm Görevlerim</a>
                     </div>
                 </div>
             </li>
@@ -76,11 +72,6 @@
 
             <!-- Divider -->
             <hr class="sidebar-divider">
-
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Addons
-            </div>
 
             <!-- Divider -->
             <hr class="sidebar-divider d-none d-md-block">
@@ -304,7 +295,7 @@
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Logout
+                                    Çıkış Yap
                                 </a>
                             </div>
                         </li>
@@ -343,15 +334,15 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
+                    <h5 class="modal-title" id="exampleModalLabel">Ayrılmaya Hazır mısınız?</h5>
                     <button class="close" type="button" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">×</span>
                     </button>
                 </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
+                <div class="modal-body">Mevcut oturumunuzu sonlandırmak için aşağıdaki "Çıkış Yap" butonuna tıklayın.</div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="/Account/Login">Logout</a>
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">İptal</button>
+                    <a class="btn btn-primary" href="/Account/Login">Çıkış Yap</a>
                 </div>
             </div>
         </div>
@@ -377,5 +368,4 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
-
-Profile
+Logout

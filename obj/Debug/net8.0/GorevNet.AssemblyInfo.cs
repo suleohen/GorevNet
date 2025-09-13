@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GorevNet")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a3e8480b1878f88a6756158f01d53f60ce4925ff")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e003a1238a0acccf55ee1b21d7425f78b94cb6a0")]
 [assembly: System.Reflection.AssemblyProductAttribute("GorevNet")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GorevNet")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

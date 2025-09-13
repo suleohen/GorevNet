@@ -24,7 +24,6 @@ namespace GorevNet.Controllers
             _signInManager = signInManager;
             _context = context;
         }
-
         #region Login
         
         [HttpGet]
@@ -166,7 +165,6 @@ namespace GorevNet.Controllers
 
                 if (result.Succeeded)
                 {
-                    // Employee tablosunda MustChangePassword'u false yap
                     var employee = _context.Employees.FirstOrDefault(e => e.Email == user.Email);
                     if (employee != null)
                     {
@@ -412,23 +410,6 @@ namespace GorevNet.Controllers
 
         private async Task SendPasswordResetEmailAsync(string email, string token)
         {
-            // Email gönderme işlemi - SMTP ayarlarınıza göre implement edin
-            // Örnek:
-            /*
-            var resetLink = Url.Action("ResetPassword", "Account", 
-                new { token = token, email = email }, Request.Scheme);
-            
-            var emailContent = $@"
-                Şifre sıfırlama isteğiniz alınmıştır.
-                
-                Şifrenizi sıfırlamak için aşağıdaki linke tıklayınız:
-                {resetLink}
-                
-                Bu link 24 saat geçerlidir.
-            ";
-            
-            // Email gönder
-            */
         }
 
         #endregion

@@ -3,7 +3,7 @@
 namespace GorevNet.Models.ViewModels
 {
     public class EditEmployeeViewModel
-    {
+{
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Ad gereklidir.")]

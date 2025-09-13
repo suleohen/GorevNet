@@ -1,0 +1,558 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Toplu Personel Ekleme";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-users-cog text-primary mr-2"></i>
+        Toplu Personel Ekleme
+    </h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Index", "Admin")">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("EmployeeManagement", "Admin")">Personel Yönetimi</a></li>
+            <li class="breadcrumb-item active">Toplu Ekleme</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Success/Error Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<!-- Main Card Container -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-lg border-0">
+            <!-- Card Header with Tabs -->
+            <div class="card-header bg-gradient-primary text-white">
+                <ul class="nav nav-tabs card-header-tabs" id="bulkAddTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active text-white" id="csv-tab" data-toggle="tab" href="#csv-upload" role="tab">
+                            <i class="fas fa-file-csv mr-2"></i>CSV Dosyası Yükleme
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link text-white" id="template-tab" data-toggle="tab" href="#template-download" role="tab">
+                            <i class="fas fa-download mr-2"></i>Şablon İndir
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-body p-4">
+                <div class="tab-content" id="bulkAddTabsContent">
+                    
+                    <!-- CSV Upload Tab -->
+                    <div class="tab-pane fade show active" id="csv-upload" role="tabpanel">
+                        <h5 class="mb-4">
+                            <i class="fas fa-upload text-primary mr-2"></i>
+                            CSV Dosyası ile Toplu Personel Ekleme
+                        </h5>
+                        
+                        <div class="alert alert-info border-left-info">
+                            <div class="text-info">
+                                <strong><i class="fas fa-info-circle mr-2"></i>Bilgi:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>CSV dosyası UTF-8 formatında olmalıdır</li>
+                                    <li>Kolon sırası: Ad, Soyad, Email, Departman, Pozisyon</li>
+                                    <li>İlk satır başlık satırı olarak kabul edilir</li>
+                                    <li>Maksimum 100 personel tek seferde eklenebilir</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <form id="csvUploadForm" enctype="multipart/form-data">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label class="form-label font-weight-bold">
+                                            <i class="fas fa-file-csv mr-1"></i>
+                                            CSV Dosyası Seçin <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="csvFile" accept=".csv" required>
+                                            <label class="custom-file-label" for="csvFile">Dosya seçin...</label>
+                                        </div>
+                                        <small class="form-text text-muted">
+                                            Sadece .csv dosyaları kabul edilir (Maks. 5MB)
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary btn-lg btn-block" id="uploadBtn">
+                                        <i class="fas fa-upload mr-2"></i>
+                                        <span class="btn-text">Dosyayı Yükle ve İşle</span>
+                                        <span class="spinner-border spinner-border-sm d-none ml-2" role="status"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Preview Table -->
+                        <div id="csvPreview" style="display: none;">
+                            <hr class="my-4">
+                            <h6 class="text-primary">
+                                <i class="fas fa-eye mr-2"></i>Dosya Önizleme
+                            </h6>
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-bordered table-sm" id="previewTable">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Ad</th>
+                                            <th>Soyad</th>
+                                            <th>Email</th>
+                                            <th>Departman</th>
+                                            <th>Pozisyon</th>
+                                            <th>Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="previewTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-success" id="processBtn">
+                                    <i class="fas fa-check mr-2"></i>Personelleri Oluştur
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="cancelBtn">
+                                    <i class="fas fa-times mr-2"></i>İptal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Template Download Tab -->
+                    <div class="tab-pane fade" id="template-download" role="tabpanel">
+                        <h5 class="mb-4">
+                            <i class="fas fa-file-download text-primary mr-2"></i>
+                            CSV Şablon Dosyası İndirme
+                        </h5>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card border-left-success">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-success">
+                                            <i class="fas fa-file-csv mr-2"></i>Standart CSV Şablonu
+                                        </h6>
+                                        <p class="card-text">
+                                            Toplu personel ekleme için hazırlanmış örnek CSV dosyasını indirin. 
+                                            Bu dosya doğru format ve örnek veriler içermektedir.
+                                        </p>
+                                        <button type="button" class="btn btn-success" id="downloadTemplateBtn">
+                                            <i class="fas fa-download mr-2"></i>Şablon Dosyasını İndir
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-info-circle text-info mr-2"></i>Şablon İçeriği
+                                        </h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered">
+                                                <thead>
+                                                    <tr class="bg-secondary text-white">
+                                                        <th>Kolon</th>
+                                                        <th>Örnek</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td><strong>Ad</strong></td>
+                                                        <td>Ahmet</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Soyad</strong></td>
+                                                        <td>Yılmaz</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Email</strong></td>
+                                                        <td>ahmet@firma.com</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Departman</strong></td>
+                                                        <td>Yazılım</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Pozisyon</strong></td>
+                                                        <td>Geliştirici</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mt-4">
+                            <h6><i class="fas fa-lightbulb mr-2"></i>Kullanım Talimatları:</h6>
+                            <ol>
+                                <li>Şablon dosyasını indirin</li>
+                                <li>Excel veya LibreOffice ile açın</li>
+                                <li>Örnek verileri kendi personel bilgilerinizle değiştirin</li>
+                                <li>CSV formatında kaydedin (UTF-8 encoding)</li>
+                                <li>"CSV Dosyası Yükleme" sekmesinden dosyayı yükleyin</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Modal -->
+<div class="modal fade" id="resultsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar mr-2"></i>İşlem Sonuçları
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="resultsContent">
+                    <!-- Results will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+                <a href="@Url.Action("ListEmployee", "Admin")" class="btn btn-primary">
+                    <i class="fas fa-users mr-2"></i>Personel Listesini Görüntüle
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Department options
+            const departments = [
+                'Bilgi İşlem', 'Yazılım', 'İnsan Kaynakları', 'Muhasebe', 
+                'Pazarlama', 'Satış', 'Üretim', 'Kalite Kontrol', 'Lojistik'
+            ];
+
+            // CSV File selection
+            $('#csvFile').on('change', function() {
+                const fileName = $(this)[0].files[0]?.name || 'Dosya seçin...';
+                $(this).next('.custom-file-label').text(fileName);
+            });
+
+            // CSV Upload Form
+            $('#csvUploadForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const fileInput = document.getElementById('csvFile');
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    showAlert('Lütfen bir CSV dosyası seçin.', 'warning');
+                    return;
+                }
+
+                if (file.size > 5 * 1024 * 1024) { // 5MB
+                    showAlert('Dosya boyutu 5MB\'dan büyük olamaz.', 'danger');
+                    return;
+                }
+
+                // Show loading
+                toggleButton('#uploadBtn', true);
+
+                // Parse CSV
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    encoding: 'UTF-8',
+                    complete: function(results) {
+                        toggleButton('#uploadBtn', false);
+                        
+                        if (results.errors.length > 0) {
+                            showAlert('CSV dosyası işlenirken hata oluştu: ' + results.errors[0].message, 'danger');
+                            return;
+                        }
+
+                        if (results.data.length === 0) {
+                            showAlert('CSV dosyası boş veya geçersiz format.', 'warning');
+                            return;
+                        }
+
+                        if (results.data.length > 100) {
+                            showAlert('Tek seferde en fazla 100 personel eklenebilir.', 'warning');
+                            return;
+                        }
+
+                        displayCsvPreview(results.data);
+                    },
+                    error: function(error) {
+                        toggleButton('#uploadBtn', false);
+                        showAlert('Dosya okuma hatası: ' + error.message, 'danger');
+                    }
+                });
+            });
+
+            // Process CSV data
+            $('#processBtn').on('click', function() {
+                const tableBody = document.getElementById('previewTableBody');
+                const rows = tableBody.getElementsByTagName('tr');
+                const employees = [];
+
+                for (let i = 0; i < rows.length; i++) {
+                    const cells = rows[i].getElementsByTagName('td');
+                    if (cells.length >= 5) {
+                        employees.push({
+                            FirstName: cells[0].textContent.trim(),
+                            LastName: cells[1].textContent.trim(),
+                            Email: cells[2].textContent.trim(),
+                            Department: cells[3].textContent.trim(),
+                            Position: cells[4].textContent.trim()
+                        });
+                    }
+                }
+
+                submitBulkEmployees(employees);
+            });
+
+            // Cancel CSV preview
+            $('#cancelBtn').on('click', function() {
+                $('#csvPreview').hide();
+                $('#csvFile').val('');
+                $('.custom-file-label').text('Dosya seçin...');
+            });
+
+            // Download template
+            $('#downloadTemplateBtn').on('click', function() {
+                console.log('Download template button clicked');
+                downloadCsvTemplate();
+            });
+
+            // Functions
+            function displayCsvPreview(data) {
+                const tableBody = $('#previewTableBody');
+                tableBody.empty();
+
+                data.forEach(function(row, index) {
+                    const firstName = row['Ad'] || row['FirstName'] || '';
+                    const lastName = row['Soyad'] || row['LastName'] || '';
+                    const email = row['Email'] || '';
+                    const department = row['Departman'] || row['Department'] || '';
+                    const position = row['Pozisyon'] || row['Position'] || '';
+                    
+                    let status = 'success';
+                    let statusText = 'Geçerli';
+                    
+                    if (!firstName || !lastName || !email || !department) {
+                        status = 'danger';
+                        statusText = 'Eksik Bilgi';
+                    } else if (!isValidEmail(email)) {
+                        status = 'warning';
+                        statusText = 'Geçersiz Email';
+                    }
+
+                    const statusBadge = `<span class="badge badge-${status}">${statusText}</span>`;
+
+                    const rowHtml = `
+                        <tr class="table-${status === 'success' ? 'light' : status}">
+                            <td>${firstName}</td>
+                            <td>${lastName}</td>
+                            <td>${email}</td>
+                            <td>${department}</td>
+                            <td>${position}</td>
+                            <td>${statusBadge}</td>
+                        </tr>
+                    `;
+                    
+                    tableBody.append(rowHtml);
+                });
+
+                $('#csvPreview').show();
+            }
+
+            function submitBulkEmployees(employees) {
+                $.ajax({
+                    url: '@Url.Action("BulkCreateEmployees", "Admin")',
+                    type: 'POST',
+                    data: {
+                        employees: employees,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(results) {
+                        displayResults(results);
+                    },
+                    error: function(xhr, status, error) {
+                        showAlert('İşlem sırasında hata oluştu: ' + error, 'danger');
+                    }
+                });
+            }
+
+            function displayResults(results) {
+                let successCount = 0;
+                let errorCount = 0;
+                let resultsHtml = '';
+
+                results.forEach(function(result) {
+                    if (result.Success) {
+                        successCount++;
+                        resultsHtml += `
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                <strong>${result.Email}:</strong> ${result.Message}
+                            </div>
+                        `;
+                    } else {
+                        errorCount++;
+                        resultsHtml += `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                <strong>${result.Email}:</strong> ${result.Message}
+                            </div>
+                        `;
+                    }
+                });
+
+                const summaryHtml = `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <h3 class="text-success">${successCount}</h3>
+                                    <p class="mb-0">Başarılı</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-danger">
+                                <div class="card-body text-center">
+                                    <h3 class="text-danger">${errorCount}</h3>
+                                    <p class="mb-0">Hatalı</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${resultsHtml}
+                    </div>
+                `;
+
+                $('#resultsContent').html(summaryHtml);
+                $('#resultsModal').modal('show');
+            }
+
+            function downloadCsvTemplate() {
+                console.log('Downloading CSV template...');
+                
+                try {
+                    const templateData = [
+                        ['Ad', 'Soyad', 'Email', 'Departman', 'Pozisyon'],
+                        ['Ahmet', 'Yılmaz', 'ahmet.yilmaz@firma.com', 'Yazılım', 'Yazılım Geliştirici'],
+                        ['Ayşe', 'Demir', 'ayse.demir@firma.com', 'İnsan Kaynakları', 'İK Uzmanı'],
+                        ['Mehmet', 'Kaya', 'mehmet.kaya@firma.com', 'Pazarlama', 'Pazarlama Uzmanı']
+                    ];
+
+                    if (typeof Papa !== 'undefined') {
+                        const csv = Papa.unparse(templateData, {
+                            encoding: 'UTF-8'
+                        });
+
+                        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = 'personel_sablonu.csv';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        console.log('CSV template downloaded successfully');
+                    } else {
+                        console.warn('PapaParse not available, creating manual CSV');
+                        const csvContent = templateData.map(row => 
+                            row.map(field => `"${field}"`).join(',')
+                        ).join('\n');
+                        
+                        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = 'personel_sablonu.csv';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+                } catch (error) {
+                    console.error('Error downloading template:', error);
+                    showAlert('Şablon indirme sırasında hata oluştu: ' + error.message, 'danger');
+                }
+            }
+
+            function toggleButton(selector, loading) {
+                const $btn = $(selector);
+                const $text = $btn.find('.btn-text');
+                const $spinner = $btn.find('.spinner-border');
+                
+                if (loading) {
+                    $btn.prop('disabled', true);
+                    $text.text('İşleniyor...');
+                    $spinner.removeClass('d-none');
+                } else {
+                    $btn.prop('disabled', false);
+                    $text.text('Dosyayı Yükle ve İşle');
+                    $spinner.addClass('d-none');
+                }
+            }
+
+            function showAlert(message, type) {
+                const alertHtml = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="close" data-dismiss="alert">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                `;
+                
+                const alertContainer = $('<div>').html(alertHtml);
+                $('.card-body').first().prepend(alertContainer);
+                
+                setTimeout(function() {
+                    alertContainer.fadeOut();
+                }, 5000);
+            }
+            ra
+            function isValidEmail(email) {
+                const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+                return emailRegex.test(email);
+            }
+        });
+    </script>
+}

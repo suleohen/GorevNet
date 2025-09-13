@@ -11,10 +11,68 @@
     </a>
 </div>
 
+<!-- Filtre Seçenekleri -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <div class="row align-items-center">
+            <div class="col">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-filter mr-2"></i>Görevleri Filtrele
+                </h6>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary active" data-filter="all">
+                        <i class="fas fa-list"></i> Tümü
+                    </button>
+                    <button type="button" class="btn btn-outline-info" data-filter="pending">
+                        <i class="fas fa-pause"></i> Bekleyen
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" data-filter="ongoing">
+                        <i class="fas fa-play"></i> Devam Eden
+                    </button>
+                    <button type="button" class="btn btn-outline-success" data-filter="completed">
+                        <i class="fas fa-check"></i> Tamamlanan
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" data-filter="overdue">
+                        <i class="fas fa-exclamation-triangle"></i> Süresi Geçen
+                    </button>
+                    <button type="button" class="btn btn-outline-dark" data-filter="high-priority">
+                        <i class="fas fa-exclamation"></i> Yüksek Öncelik
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Arama Kutusu (Opsiyonel) -->
+        <div class="card-body pt-0">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control form-control-sm" 
+                               id="searchInput" placeholder="Görev adı veya personel ara...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary btn-sm" type="button" id="clearSearch">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <small class="text-muted" id="filterStats">
+                        Toplam @Model.Count görev gösteriliyor
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ana Görev Tablosu -->
 <div class="card shadow mb-4">
     <!-- Card Header - Dropdown -->
     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">Görev Listesi (@Model.Count)</h6>
+        <h6 class="m-0 font-weight-bold text-primary" id="taskListHeader">Görev Listesi (@Model.Count)</h6>
         <div class="dropdown no-arrow">
             <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -26,6 +84,10 @@
                 <a class="dropdown-item" href="/Admin/CreateTask">
                     <i class="fas fa-plus fa-sm fa-fw mr-2 text-gray-400"></i>
                     Görev Ekle
+                </a>
+                <a class="dropdown-item" href="/Admin/Dashboard">
+                    <i class="fas fa-tachometer-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                    Dashboard
                 </a>
             </div>
         </div>
@@ -50,16 +112,50 @@
                     <tbody>
                         @foreach (var item in Model)
                         {
-                            <tr>
-                                <td>
-                                    <strong>@item.Title</strong>
-                                    @if (!string.IsNullOrEmpty(item.Description))
-                                    {
-                                        <br>
+                            var isCompleted = item.Status == GorevNet.Models.TaskStatus.Tamamlandı;
+                            var isOverdue = item.DueDate.HasValue && item.DueDate.Value < DateTime.Now && !isCompleted;
+                            var isHighPriority = item.Priority == GorevNet.Models.TaskPriority.Yüksek;
+                            var rowClass = isCompleted ? "table-success" : isOverdue ? "table-danger" : "";
 
-                                        <small class="text-muted">@(item.Description.Length > 50 ? item.Description.Substring(0, 50) + "..." : item.Description)</small>
-                                    }
+                            <tr class="task-item @rowClass"
+                                data-status="@item.Status.ToString().ToLower().Replace("ı", "i").Replace("ğ", "g").Replace("ü", "u").Replace("ş", "s").Replace("ö", "o").Replace("ç", "c")"
+                                data-overdue="@(isOverdue ? "true" : "false")"
+                                data-priority="@item.Priority.ToString().ToLower().Replace("ı", "i").Replace("ğ", "g").Replace("ü", "u").Replace("ş", "s").Replace("ö", "o").Replace("ç", "c")"
+                                data-employee="@item.AssignedUserName"
+                                data-task-title="@item.Title.ToLower()"
+                                id="task-row-@item.Id">
+                                
+                                <td>
+                                    <div class="d-flex align-items-start">
+                                        <div class="flex-grow-1">
+                                            <strong class="@(isCompleted ? "text-success" : isOverdue ? "text-danger" : "")">
+                                                @if (isCompleted)
+                                                {
+                                                    <i class="fas fa-check-circle text-success mr-1"></i>
+                                                }
+                                                else if (isOverdue)
+                                                {
+                                                    <i class="fas fa-exclamation-triangle text-danger mr-1"></i>
+                                                }
+                                                @item.Title
+                                            </strong>
+                                            @if (!string.IsNullOrEmpty(item.Description))
+                                            {
+                                                <br>
+                                                <small class="text-muted">@(item.Description.Length > 80 ? item.Description.Substring(0, 80) + "..." : item.Description)</small>
+                                            }
+                                            @if (!string.IsNullOrEmpty(item.Comment))
+                                            {
+                                                <br>
+                                                <small class="text-info">
+                                                    <i class="fas fa-comment fa-xs mr-1"></i>
+                                                    Yorum mevcut
+                                                </small>
+                                            }
+                                        </div>
+                                    </div>
                                 </td>
+                                
                                 <td>
                                     @{
                                         string statusClass = item.Status switch
@@ -69,9 +165,20 @@
                                             GorevNet.Models.TaskStatus.Beklemede => "badge-info",
                                             _ => "badge-secondary"
                                         };
+
+                                        string statusIcon = item.Status switch
+                                        {
+                                            GorevNet.Models.TaskStatus.Tamamlandı => "fas fa-check",
+                                            GorevNet.Models.TaskStatus.DevamEdiyor => "fas fa-play",
+                                            GorevNet.Models.TaskStatus.Beklemede => "fas fa-pause",
+                                            _ => "fas fa-question"
+                                        };
                                     }
-                                    <span class="badge @statusClass">@item.StatusDisplay</span>
+                                    <span class="badge @statusClass">
+                                        <i class="@statusIcon mr-1"></i>@item.StatusDisplay
+                                    </span>
                                 </td>
+                                
                                 <td>
                                     @{
                                         string priorityClass = item.Priority switch
@@ -81,23 +188,51 @@
                                             GorevNet.Models.TaskPriority.Düşük => "badge-secondary",
                                             _ => "badge-secondary"
                                         };
+
+                                        string priorityIcon = item.Priority switch
+                                        {
+                                            GorevNet.Models.TaskPriority.Yüksek => "fas fa-exclamation-triangle",
+                                            GorevNet.Models.TaskPriority.Normal => "fas fa-minus",
+                                            GorevNet.Models.TaskPriority.Düşük => "fas fa-arrow-down",
+                                            _ => "fas fa-question"
+                                        };
                                     }
-                                    <span class="badge @priorityClass">@item.PriorityDisplay</span>
+                                    <span class="badge @priorityClass">
+                                        <i class="@priorityIcon mr-1"></i>@item.PriorityDisplay
+                                    </span>
                                 </td>
+                                
                                 <td>
-                                    <i class="fas fa-user fa-sm text-gray-400 mr-1"></i>
-                                    <strong>@item.AssignedUserName</strong>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm mr-2">
+                                            <div class="avatar-title bg-primary rounded-circle text-white" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                                @item.AssignedUserName.Split(' ').Select(n => n.First()).Take(2).Aggregate("", (acc, c) => acc + c)
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <strong class="small">@item.AssignedUserName</strong>
+                                        </div>
+                                    </div>
                                 </td>
+                                
                                 <td>
                                     @if (item.DueDate.HasValue)
                                     {
                                         var daysLeft = (item.DueDate.Value - DateTime.Now).Days;
-                                        if (daysLeft < 0)
+                                        if (isCompleted)
+                                        {
+                                            <span class="text-success">
+                                                <i class="fas fa-check-circle"></i>
+                                                @item.DueDate.Value.ToString("dd/MM/yyyy")
+                                                <br><small><strong>Tamamlandı</strong></small>
+                                            </span>
+                                        }
+                                        else if (daysLeft < 0)
                                         {
                                             <span class="text-danger">
                                                 <i class="fas fa-exclamation-triangle"></i>
                                                 @item.DueDate.Value.ToString("dd/MM/yyyy")
-                                                <br><small>(@Math.Abs(daysLeft) gün gecikti)</small>
+                                                <br><small><strong>@Math.Abs(daysLeft) gün gecikti!</strong></small>
                                             </span>
                                         }
                                         else if (daysLeft <= 2)
@@ -105,30 +240,46 @@
                                             <span class="text-warning">
                                                 <i class="fas fa-clock"></i>
                                                 @item.DueDate.Value.ToString("dd/MM/yyyy")
-                                                <br><small>(@daysLeft gün kaldı)</small>
+                                                <br><small><strong>@daysLeft gün kaldı</strong></small>
                                             </span>
                                         }
                                         else
                                         {
-                                            <span>@item.DueDate.Value.ToString("dd/MM/yyyy")</span>
+                                            <span class="text-success">
+                                                <i class="fas fa-calendar-check"></i>
+                                                @item.DueDate.Value.ToString("dd/MM/yyyy")
+                                                <br><small>@daysLeft gün var</small>
+                                            </span>
                                         }
                                     }
                                     else
                                     {
-                                        <span class="text-muted">-</span>
+                                        <span class="text-muted">
+                                            <i class="fas fa-calendar-times"></i>
+                                            Belirlenmemiş
+                                        </span>
                                     }
                                 </td>
+                                
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a href="/Admin/TaskDetails/@item.Id" class="btn btn-sm btn-primary" data-toggle="tooltip" title="İncele">
+                                        <a href="/Admin/TaskDetails/@item.Id" 
+                                           class="btn btn-sm btn-primary" 
+                                           data-toggle="tooltip" 
+                                           title="Detayları Görüntüle">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="/Admin/EditTask?id=@item.Id" class="btn btn-sm btn-warning" data-toggle="tooltip" title="Düzenle">
+                                        <a href="/Admin/EditTask?id=@item.Id" 
+                                           class="btn btn-sm btn-warning" 
+                                           data-toggle="tooltip" 
+                                           title="Düzenle">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <button type="button" class="btn btn-sm btn-danger"
+                                        <button type="button" 
+                                                class="btn btn-sm btn-danger"
                                                 onclick="deleteTask(@item.Id, '@item.Title')"
-                                                data-toggle="tooltip" title="Sil">
+                                                data-toggle="tooltip" 
+                                                title="Sil">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -159,20 +310,167 @@
 </form>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <script>
-        // DataTable initialization
         $(document).ready(function () {
-            $('#dataTable').DataTable({
+            // DataTable initialization
+            var dataTable = $('#dataTable').DataTable({
                 "language": {
                     "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Turkish.json"
                 },
                 "order": [[0, "asc"]],
-                "pageLength": 25
+                "pageLength": 25,
+                "responsive": true,
+                "columnDefs": [
+                    { "orderable": false, "targets": 5 } // İşlemler sütunu sıralama dışı
+                ],
+                "dom": 'rt<"bottom"flp><"clear">' // Üst arama kutusunu gizle
+            });
+
+            // Filtre butonları
+            $('.btn-group button[data-filter]').on('click', function() {
+                // Aktif sınıfı güncelle
+                $('.btn-group button').removeClass('active');
+                $(this).addClass('active');
+
+                var filter = $(this).data('filter');
+                filterTasks(filter);
+                updateResultCount(filter);
+            });
+
+            // Arama işlevi
+            $('#searchInput').on('keyup', function() {
+                var searchText = $(this).val().toLowerCase();
+                filterTasksWithSearch(searchText);
+            });
+
+            // Arama temizle
+            $('#clearSearch').on('click', function() {
+                $('#searchInput').val('');
+                $('.task-item').addClass('search-match');
+                var activeFilter = $('.btn-group button.active').data('filter') || 'all';
+                filterTasks(activeFilter);
+                updateResultCount(activeFilter);
             });
 
             // Tooltip initialization
             $('[data-toggle="tooltip"]').tooltip();
+
+            // Sayfa yüklendiğinde sayıları güncelle
+            updateResultCount('all');
         });
+
+        // Ana filtre fonksiyonu
+        function filterTasks(filter) {
+            var rows = $('.task-item');
+
+            rows.each(function() {
+                var $row = $(this);
+                var status = $row.data('status');
+                var isOverdue = $row.data('overdue') === 'true';
+                var priority = $row.data('priority');
+                var shouldShow = false;
+
+                switch(filter) {
+                    case 'all':
+                        shouldShow = true;
+                        break;
+                    case 'pending':
+                        shouldShow = status === 'beklemede';
+                        break;
+                    case 'ongoing':
+                        shouldShow = status === 'devamediyor';
+                        break;
+                    case 'completed':
+                        shouldShow = status === 'tamamlandi';
+                        break;
+                    case 'overdue':
+                        shouldShow = isOverdue;
+                        break;
+                    case 'high-priority':
+                        shouldShow = priority === 'yuksek';
+                        break;
+                }
+
+                if (shouldShow) {
+                    $row.show();
+                } else {
+                    $row.hide();
+                }
+            });
+
+            // DataTable'ı yenile
+            dataTable.draw(false);
+        }
+
+        // Arama ile filtreleme
+        function filterTasksWithSearch(searchText) {
+            var activeFilter = $('.btn-group button.active').data('filter') || 'all';
+            
+            $('.task-item').each(function() {
+                var $row = $(this);
+                var taskTitle = $row.data('task-title') || '';
+                var employeeName = $row.data('employee').toLowerCase();
+                
+                var matchesSearch = searchText === '' || 
+                                   taskTitle.includes(searchText) || 
+                                   employeeName.includes(searchText);
+                
+                if (matchesSearch) {
+                    $row.addClass('search-match');
+                } else {
+                    $row.removeClass('search-match');
+                }
+            });
+
+            // Hem filtre hem arama kriterlerini uygula
+            filterTasks(activeFilter);
+            
+            // Sadece arama eşleşenlerini göster
+            if (searchText !== '') {
+                $('.task-item').each(function() {
+                    if (!$(this).hasClass('search-match')) {
+                        $(this).hide();
+                    }
+                });
+            }
+
+            updateResultCount(activeFilter, searchText);
+        }
+
+        // Sonuç sayısını güncelle
+        function updateResultCount(filter, searchText = '') {
+            var totalRows = $('.task-item').length;
+            var visibleRows = $('.task-item:visible').length;
+            var filterText = getFilterText(filter);
+            
+            var headerText = `Görev Listesi (${visibleRows}/${totalRows})`;
+            if (filter !== 'all' || searchText !== '') {
+                headerText += ` - ${filterText}`;
+            }
+            
+            $('#taskListHeader').html(headerText);
+            
+            var statsText = `${visibleRows} görev gösteriliyor`;
+            if (searchText !== '') {
+                statsText += ` (arama: "${searchText}")`;
+            }
+            $('#filterStats').text(statsText);
+        }
+
+        // Filtre metni al
+        function getFilterText(filter) {
+            switch(filter) {
+                case 'all': return 'Tümü';
+                case 'pending': return 'Bekleyen';
+                case 'ongoing': return 'Devam Eden';
+                case 'completed': return 'Tamamlanan';
+                case 'overdue': return 'Süresi Geçen';
+                case 'high-priority': return 'Yüksek Öncelik';
+                default: return 'Filtrelenmiş';
+            }
+        }
 
         // Task silme fonksiyonu
         function deleteTask(taskId, taskTitle) {
@@ -187,7 +485,15 @@
                 cancelButtonText: 'İptal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // AJAX ile silme işlemi
+                    // Loading göster
+                    Swal.fire({
+                        title: 'Siliniyor...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
                     $.ajax({
                         url: '/Admin/DeleteTask',
                         type: 'POST',
@@ -197,31 +503,151 @@
                         },
                         success: function (response) {
                             if (response.success) {
-                                Swal.fire(
-                                    'Silindi!',
-                                    response.message,
-                                    'success'
-                                ).then(() => {
-                                    location.reload();
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Silindi!',
+                                    text: response.message,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    // Satırı tablodan kaldır
+                                    $(`#task-row-${taskId}`).fadeOut(300, function() {
+                                        $(this).remove();
+                                        var activeFilter = $('.btn-group button.active').data('filter') || 'all';
+                                        var searchText = $('#searchInput').val();
+                                        updateResultCount(activeFilter, searchText);
+                                    });
                                 });
                             } else {
-                                Swal.fire(
-                                    'Hata!',
-                                    response.message,
-                                    'error'
-                                );
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Hata!',
+                                    text: response.message
+                                });
                             }
                         },
                         error: function () {
-                            Swal.fire(
-                                'Hata!',
-                                'Silme işlemi sırasında bir hata oluştu.',
-                                'error'
-                            );
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Hata!',
+                                text: 'Silme işlemi sırasında bir hata oluştu.'
+                            });
                         }
                     });
                 }
             });
         }
     </script>
+
+    <!-- CSS Stilleri -->
+    <style>
+        /* Tablo satır renkleri */
+        .table-success {
+            background-color: rgba(212, 237, 218, 0.3) !important;
+        }
+
+        .table-danger {
+            background-color: rgba(248, 215, 218, 0.3) !important;
+        }
+
+        /* Filtre butonları */
+        .btn-group button.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+            box-shadow: 0 2px 4px rgba(0,123,255,.3);
+        }
+
+        .btn-group button:hover:not(.active) {
+            background-color: #f8f9fa;
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        /* Avatar stilleri */
+        .avatar-sm {
+            width: 30px;
+            height: 30px;
+        }
+
+        .avatar-title {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        /* Responsive tasarım */
+        @@media (max-width: 768px) {
+            .btn-group {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .btn-group button {
+                margin: 2px;
+                flex: 1;
+                min-width: 100px;
+                font-size: 12px;
+            }
+
+            .btn-group button i {
+                display: none;
+            }
+
+            #searchInput {
+                margin-bottom: 10px;
+            }
+        }
+
+        /* Animasyonlar */
+        .btn-group button {
+            transition: all 0.2s ease;
+        }
+
+        .task-item {
+            transition: all 0.3s ease;
+        }
+
+        .task-item:hover {
+            background-color: rgba(0,123,255,.05);
+        }
+
+        /* Badge stilleri */
+        .badge {
+            font-size: 0.75em;
+            padding: 0.375em 0.75em;
+        }
+
+        .badge i {
+            margin-right: 3px;
+        }
+
+        /* Arama kutusu */
+        #searchInput:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+
+        /* Tooltip stilleri */
+        .tooltip-inner {
+            font-size: 12px;
+        }
+
+        /* Görev başlıkları */
+        .task-item td:first-child strong {
+            font-size: 14px;
+            line-height: 1.3;
+        }
+
+        .task-item td:first-child small {
+            line-height: 1.2;
+            display: block;
+            margin-top: 2px;
+        }
+    </style>
 }
